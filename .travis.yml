@@ -32,9 +32,14 @@ install:
   # - listen on localhost:4848
   # - enable root login
   # - root login via pubkey
+  # - add userA
   - docker pull danielguerra/alpine-sshd
   - docker rm -f alpine-sshd || true
   - docker run -p 4848:22 --name alpine-sshd --hostname alpine-sshd -d danielguerra/alpine-sshd sh -c 'echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -D'
+  - docker exec -i alpine-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA'
+  - docker exec -i alpine-sshd sh -c 'su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
+  - docker exec -i alpine-sshd sh -c 'cat ~/.ssh/authorized_keys >> /home/userA/.ssh/authorized_keys'
+  - docker exec -i alpine-sshd sh -c 'su -c "ls -lhd .ssh; ls -lh .ssh/" userA'
   - ssh-keygen -N '' -f ~/.ssh/id_rsa
   - cat ~/.ssh/id_rsa.pub | docker exec -i alpine-sshd sh -c 'cd; umask 077; mkdir -p .ssh; cat >> .ssh/authorized_keys'
   - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:4848 || true
@@ -43,14 +48,28 @@ install:
 
 script:
   - set -e
+  - export ANSIBLE_SSH_PIPELINING=1
 
   # Basic role syntax check
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
 
   # root on alpine
   - echo "====== [round 1][root on alpine] ======"
-  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root" -vvvvv
   - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root"
+  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root"
+
+  - echo "====== [round 2][non-root on alpine] ======"
+  - true && ! ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA" -vvvvv
+  - docker exec -i alpine-sshd sh -c 'export GLIBC_VERSION=2.23-r3 && \
+  apk add --update curl && \
+  curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub && \
+  curl -Lo glibc.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" && \
+  curl -Lo glibc-bin.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" && \
+  apk add glibc-bin.apk glibc.apk && \
+  /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib && \
+  echo "hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4" >> /etc/nsswitch.conf'
+  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA" -vvvvv
+  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA"
 
 #notifications:
 #  webhooks: https://galaxy.ansible.com/api/v1/notifications/
