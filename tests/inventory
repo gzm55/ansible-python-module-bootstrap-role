@@ -1,0 +1,1 @@
+testserverA ansible_host=localhost ansible_port=4848
