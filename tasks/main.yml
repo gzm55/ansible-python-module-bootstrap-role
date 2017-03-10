@@ -120,8 +120,8 @@
                {{ shell_and }} curl -L -s -o - -- {{ exxo_url | quote }}  | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
           test -x exxo \
                {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
-               {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }}
-               {{ shell_and }} {{ shell_export }} PY{{ shell_export_eq }}{{ exxo_deploy_dir + '/bin/python' | quote }}
+               {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
+               {{ shell_and }} {{ shell_export }} PY{{ shell_export_eq }}{{ exxo_deploy_dir + '/bin/python' | quote }} \
                {{ shell_and }} {{ shell_exit_if_python_is_valid }}
           cd {{ shell_and }} rm -rf -- {{ ('.ansible/tmp/exxo' + omit) | quote }}
           exit 55

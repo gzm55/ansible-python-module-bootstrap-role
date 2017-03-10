@@ -62,8 +62,8 @@ script:
   - docker exec -i alpine-sshd sh -c 'apk del python'
   - true && ! ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA" -vvvvv
   - docker exec -i alpine-sshd sh -c 'export GLIBC_VERSION=2.23-r3 && apk add --update curl && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub && curl -Lo glibc.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" && curl -Lo glibc-bin.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" && apk add glibc-bin.apk glibc.apk && /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib && echo -n "hosts:">>/etc/nsswitch.conf && echo " files mdns4_minimal [NOTFOUND=return] dns mdns4" >> /etc/nsswitch.conf'
-  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA" -vvvvv
   - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA"
+  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA" -vvvvv
 
 #notifications:
 #  webhooks: https://galaxy.ansible.com/api/v1/notifications/
