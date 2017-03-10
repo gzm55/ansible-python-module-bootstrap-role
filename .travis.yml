@@ -49,8 +49,8 @@ script:
 
   # root on alpine
   - echo "====== [round 1][root on alpine] ======"
-  - ansible-playbook tests/test.yml -i tests/inventory
-  - ansible-playbook tests/test.yml -i tests/inventory
+  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root"
+  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root"
 
 #notifications:
 #  webhooks: https://galaxy.ansible.com/api/v1/notifications/
