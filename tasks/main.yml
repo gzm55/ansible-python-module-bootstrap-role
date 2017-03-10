@@ -74,7 +74,7 @@
     - name: installing python
       register: installing_python
       vars:
-      - exxo_deploy_dir: "{{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('/opt', '/var/tmp') }}/exxo-python-{{ exxo_vesion }}-{{ exxo_installer_version }}"
+      - exxo_deploy_dir: "{{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('/opt', '/var/tmp') }}/exxo-python-{{ exxo_version }}-{{ exxo_installer_version }}"
       - raw_script: |-
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which apt-get', 'false') }} \
               {{ shell_and }} {{ shell_export }} DEBIAN_FRONTEND{{ shell_export_eq }}noninteractive \

@@ -49,7 +49,7 @@ script:
 
   # root on alpine
   - echo "====== [round 1][root on alpine] ======"
-  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root"
+  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root" -vvvvv
   - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root"
 
 #notifications:
