@@ -26,9 +26,9 @@
         {{ shell_exit_if_python_is_valid }}
         {{ shell_export }} PY{{ shell_export_eq }}python26
         {{ shell_exit_if_python_is_valid }}
-        {{ shell_export }} PY{{ shell_export_eq }}{{ ('/opt/exxo-python-' + exxo_version '-' + exxo_installer_version) | quote }}/bin/python
+        {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python
         {{ shell_exit_if_python_is_valid }}
-        {{ shell_export }} PY{{ shell_export_eq }}{{ ('/var/tmp/exxo-python-' + exxo_version '-' + exxo_installer_version) | quote }}/bin/python
+        {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python
         {{ shell_exit_if_python_is_valid }}
         exit 41
     raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
@@ -144,9 +144,9 @@
           {{ shell_exit_if_python_is_valid }}
           {{ shell_export }} PY{{ shell_export_eq }}python26
           {{ shell_exit_if_python_is_valid }}
-          {{ shell_export }} PY{{ shell_export_eq }}{{ ('/opt/exxo-python-' + exxo_version '-' + exxo_installer_version) | quote }}/bin/python
+          {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python
           {{ shell_exit_if_python_is_valid }}
-          {{ shell_export }} PY{{ shell_export_eq }}{{ ('/var/tmp/exxo-python-' + exxo_version '-' + exxo_installer_version) | quote }}/bin/python
+          {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python
           {{ shell_exit_if_python_is_valid }}
           echo "Unsupported platforms!"
           exit 43
