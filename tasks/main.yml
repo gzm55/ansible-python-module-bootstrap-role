@@ -106,7 +106,7 @@
               {{ shell_and }} apk add --quiet --update-cache python \
               {{ shell_and }} exit 0
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which pkg', 'false') }} \
-              {{ shell_and }} pkg install -y python27
+              {{ shell_and }} pkg install -y python27 \
               {{ shell_and }} exit 0
           {{ (remote_linux_x64_gblic.rc | d(0) == 42) | ternary('true', 'exit 50') }}
           which wget {{ shell_or }} which curl {{ shell_or }} exit 51
@@ -124,7 +124,6 @@
                {{ shell_and }} {{ shell_export }} PY{{ shell_export_eq }}{{ exxo_deploy_dir + '/bin/python' | quote }}
                {{ shell_and }} {{ shell_exit_if_python_is_valid }}
           cd {{ shell_and }} rm -rf -- {{ ('.ansible/tmp/exxo' + omit) | quote }}
-          cd {{ shell_and }} rm -rf -- {{ exxo_deploy_dir | quote }}
           exit 55
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
 
