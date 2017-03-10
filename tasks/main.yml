@@ -113,11 +113,11 @@
           cd {{ shell_or }} exit 52
           mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} exit 53
           cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} exit 54
-          which wget {{ shell_and }} wget -q -O - -- {{ exxo_url | quote }} | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
+          which wget {{ shell_and }} wget --no-check-certificate -O - -- {{ exxo_url | quote }} | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
           test {{ shell_err_code }} != 0 \
                {{ shell_and }} rm -f exxo \
                {{ shell_and }} which curl \
-               {{ shell_and }} curl -L -s -o - -- {{ exxo_url | quote }}  | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
+               {{ shell_and }} curl -L --insecure -o - -- {{ exxo_url | quote }}  | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
           test -x exxo \
                {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
                {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
