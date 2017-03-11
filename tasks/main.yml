@@ -119,7 +119,7 @@
           cd {{ shell_or }} exit 52
           mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} exit 53
           cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} exit 54
-          which wget {{ shell_and }} wget --no-check-certificate -O - -- {{ exxo_url | quote }} | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
+          which wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
           test {{ shell_err_code }} != 0 \
                {{ shell_and }} rm -f exxo \
                {{ shell_and }} which curl \
