@@ -196,7 +196,7 @@
   - shell_export:    "{{ (shell_type == 'csh')  | ternary('setenv', 'export')  }}"
   - shell_export_eq: "{{ (shell_type == 'csh')  | ternary(' ',      '=')       }}"
   - shell_exit_if_python_is_valid: >
-        "$PY" -c 'import sys; sys.exit(not (sys.hexversion >= 0x02060000 and sys.hexversion < 0x03000000))'
+        eval \""$PY"\"" -c 'import sys; sys.exit(not (sys.hexversion >= 0x02060000 and sys.hexversion < 0x03000000))'"
         {{ shell_and }} which "$PY"
         {{ shell_and }} exit 0
   - exxo_installer_version: "0"
