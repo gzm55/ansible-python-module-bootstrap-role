@@ -28,7 +28,7 @@ install:
   # Create ansible.cfg with correct roles_path
   - printf '[defaults]\nroles_path=../' >ansible.cfg
 
-  # Start a sshd container for testing
+  # Start a alpine sshd container for testing
   # - listen on localhost:4848
   # - enable root login
   # - root login via pubkey
@@ -41,12 +41,29 @@ install:
   - ssh-keygen -N '' -f ~/.ssh/id_rsa
   - cat ~/.ssh/id_rsa.pub | docker exec -i alpine-sshd sh -c 'cd; umask 077; mkdir -p .ssh; cat >> .ssh/authorized_keys'
   - docker exec -i alpine-sshd sh -c 'cat ~/.ssh/authorized_keys >> /home/userA/.ssh/authorized_keys'
-  - docker exec -i alpine-sshd sh -c 'su -c "ls -lhd /home/userA/.ssh; ls -lh /home/userA/.ssh/" userA'
   - docker exec -i alpine-sshd sh -c 'apk update'
-  - docker exec -i alpine-sshd sh -c 'apk add fish bc'
+  - docker exec -i alpine-sshd sh -c 'apk add fish bc curl'
   - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:4848 || true
-  - sleep 1 && ssh-keyscan -p 4848 localhost >> ~/.ssh/known_hosts
+  - ssh-keyscan -p 4848 localhost >> ~/.ssh/known_hosts
   - ssh -p 4848 root@localhost true
+
+  # Start a centos sshd container for testing
+  # - listen on localhost:5848
+  # - enable root login
+  # - root login via pubkey
+  # - add userA
+  - docker pull centos:latest
+  - docker rm -f centos-sshd || true
+  - docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos sh -c 'yum install openssh-server && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -D'
+  - docker exec -i centos-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA'
+  - docker exec -i centos-sshd sh -c 'su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
+  - ssh-keygen -N '' -f ~/.ssh/id_rsa
+  - cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; cat >> .ssh/authorized_keys'
+  - docker exec -i centos-sshd sh -c 'cat ~/.ssh/authorized_keys >> /home/userA/.ssh/authorized_keys'
+  - docker exec -i centos-sshd sh -c 'yum --assumeyes install tcsh'
+  - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
+  - ssh-keyscan -p 5848 localhost >> ~/.ssh/known_hosts
+  - ssh -p 5848 root@localhost true
 
 script:
   - set -e
@@ -57,15 +74,27 @@ script:
 
   # root on alpine
   - echo "====== [round 1][root on alpine] ======"
-  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root" -e "ansible_shell_type=fish" -e "ansible_shell_executable=/usr/bin/fish" -vvvvv
-  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=root" -e "ansible_shell_type=fish" -e "ansible_shell_executable=/usr/bin/fish"
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_shell_type=fish -e ansible_shell_executable=/usr/bin/fish
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_shell_type=fish -e ansible_shell_executable=/usr/bin/fish
 
+  # non root on alpine
   - echo "====== [round 2][non-root on alpine] ======"
   - docker exec -i alpine-sshd sh -c 'apk del python'
-  - true && ! ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA" -vvvvv
-  - docker exec -i alpine-sshd sh -c 'export GLIBC_VERSION=2.23-r3 && apk add curl && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub && curl -Lo glibc.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" && curl -Lo glibc-bin.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" && apk add glibc-bin.apk glibc.apk && /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib && echo -n "hosts:">>/etc/nsswitch.conf && echo " files mdns4_minimal [NOTFOUND=return] dns mdns4" >> /etc/nsswitch.conf'
-  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA" -vvvvv
-  - ansible-playbook tests/test.yml -i tests/inventory -e "ansible_user=userA"
+  - true && ! ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
+  - docker exec -i alpine-sshd sh -c 'export GLIBC_VERSION=2.23-r3 && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub && curl -Lo glibc.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" && curl -Lo glibc-bin.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" && apk add glibc-bin.apk glibc.apk && /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib && echo -n "hosts:">>/etc/nsswitch.conf && echo " files mdns4_minimal [NOTFOUND=return] dns mdns4" >> /etc/nsswitch.conf'
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
+
+  # root on centos
+  - echo "====== [round 3][root on centos] ======"
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=5848 -vvvvv
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=5848
+
+  # non root on centos
+  - echo "====== [round 4][non-root on centos] ======"
+  - docker exec -i alpine-sshd sh -c 'yum erase python python-devel yum-utils'
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
 
 #notifications:
 #  webhooks: https://galaxy.ansible.com/api/v1/notifications/

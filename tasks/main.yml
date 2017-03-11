@@ -82,47 +82,47 @@
       vars:
       - exxo_deploy_dir: "{{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('/opt', '/var/tmp') }}/exxo-python-{{ exxo_version }}-{{ exxo_installer_version }}"
       - raw_script: |-
-          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which apt-get', 'false') }} \
+          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' apt-get', 'false') }} \
               {{ shell_and }} {{ shell_export }} DEBIAN_FRONTEND{{ shell_export_eq }}noninteractive \
               {{ shell_and }} apt-get --quiet=2 --option 'Acquire::Languages=none' update \
               {{ shell_and }} apt-get --quiet=2 --assume-yes install python python-dev python-apt \
               {{ shell_and }} exit 0
-          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which zypper', 'false') }} \
+          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' zypper', 'false') }} \
               {{ shell_and }} zypper --quiet refresh \
               {{ shell_and }} zypper --quiet --non-interactive install --auto-agree-with-licenses python python-devel python-xml \
               {{ shell_and }} exit 0
-          which zypper
+          {{ shell_which }} zypper
           test {{ shell_err_code }} != 0 {{ shell_and }} \
-          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which yum', 'false') }} \
+          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' yum', 'false') }} \
               {{ shell_and }} yum --quiet makecache fast \
               {{ shell_and }} yum --quiet --assumeyes install python python-devel yum-utils \
               {{ shell_and }} exit 0
-          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which pacman', 'false') }} \
+          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' pacman', 'false') }} \
               {{ shell_and }} pacman --sync --quiet --noconfirm --refresh python2 \
               {{ shell_and }} exit 0
-          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which dnf', 'false') }} \
+          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' dnf', 'false') }} \
               {{ shell_and }} dnf --quiet makecache fast \
               {{ shell_and }} dnf --quiet --assumeyes install python python-devel python2-dnf \
               {{ shell_and }} exit 0
-          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which emerge', 'false') }} \
+          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' emerge', 'false') }} \
               {{ shell_and }} emerge --quiet --sync \
               {{ shell_and }} emerge --quiet --ask n '=dev-lang/python-2*' gentoolkit \
               {{ shell_and }} exit 0
-          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which apk', 'false') }} \
+          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' apk', 'false') }} \
               {{ shell_and }} apk add --quiet --update-cache python \
               {{ shell_and }} exit 0
-          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('which pkg', 'false') }} \
+          {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' pkg', 'false') }} \
               {{ shell_and }} pkg install -y python27 \
               {{ shell_and }} exit 0
           {{ (remote_linux_x64_gblic.rc | d(0) == 42) | ternary('true', 'exit 50') }}
-          which wget {{ shell_or }} which curl {{ shell_or }} exit 51
+          {{ shell_which }} wget {{ shell_or }} {{ shell_which }} curl {{ shell_or }} exit 51
           cd {{ shell_or }} exit 52
           mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} exit 53
           cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} exit 54
-          which wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
+          {{ shell_which }} wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
           test {{ shell_err_code }} != 0 \
                {{ shell_and }} rm -f exxo \
-               {{ shell_and }} which curl \
+               {{ shell_and }} {{ shell_which }} curl \
                {{ shell_and }} curl -L --insecure -o - -- {{ exxo_url | quote }}  | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
           test -x exxo \
                {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
@@ -190,14 +190,15 @@
              | length == 1 )
            | ternary(ansible_shell_type, 'sh')
         }}
-  - shell_err_code:  "{{ (shell_type == 'sh')   | ternary('$?',     '$status') }}"
-  - shell_and:       "{{ (shell_type == 'fish') | ternary('; and',  '&&')      }}"
-  - shell_or:        "{{ (shell_type == 'fish') | ternary('; or',   '||')      }}"
-  - shell_export:    "{{ (shell_type == 'csh')  | ternary('setenv', 'export')  }}"
-  - shell_export_eq: "{{ (shell_type == 'csh')  | ternary(' ',      '=')       }}"
+  - shell_err_code:  "{{ (shell_type == 'sh')   | ternary('$?',     '$status'   ) }}"
+  - shell_and:       "{{ (shell_type == 'fish') | ternary('; and',  '&&'        ) }}"
+  - shell_or:        "{{ (shell_type == 'fish') | ternary('; or',   '||'        ) }}"
+  - shell_export:    "{{ (shell_type == 'csh')  | ternary('setenv', 'export'    ) }}"
+  - shell_export_eq: "{{ (shell_type == 'csh')  | ternary(' ',      '='         ) }}"
+  - shell_which:     "{{ (shell_type == 'csh')  | ternary('which',  'command -v') }}"
   - shell_exit_if_python_is_valid: >
         eval \""$PY"\"" -c 'import sys; sys.exit(not (sys.hexversion >= 0x02060000 and sys.hexversion < 0x03000000))'"
-        {{ shell_and }} which "$PY"
+        {{ shell_and }} {{ shell_which }} "$PY"
         {{ shell_and }} exit 0
   - exxo_installer_version: "0"
   when: ansible_python_interpreter is not defined
