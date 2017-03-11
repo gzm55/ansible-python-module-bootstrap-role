@@ -16,15 +16,21 @@
     - raw_script: |-
         {{ shell_export }} PY{{ shell_export_eq }}/usr/bin/python
         {{ shell_exit_if_python_is_valid }}
-        {{ shell_export }} PY{{ shell_export_eq }}python2
-        {{ shell_exit_if_python_is_valid }}
         {{ shell_export }} PY{{ shell_export_eq }}python2.7
         {{ shell_exit_if_python_is_valid }}
         {{ shell_export }} PY{{ shell_export_eq }}python27
         {{ shell_exit_if_python_is_valid }}
+        {{ shell_export }} PY{{ shell_export_eq }}python2
+        {{ shell_exit_if_python_is_valid }}
         {{ shell_export }} PY{{ shell_export_eq }}python2.6
         {{ shell_exit_if_python_is_valid }}
         {{ shell_export }} PY{{ shell_export_eq }}python26
+        {{ shell_exit_if_python_is_valid }}
+        {{ shell_export }} PY{{ shell_export_eq }}pyrun2.7
+        {{ shell_exit_if_python_is_valid }}
+        {{ shell_export }} PY{{ shell_export_eq }}pyrun
+        {{ shell_exit_if_python_is_valid }}
+        {{ shell_export }} PY{{ shell_export_eq }}pypy
         {{ shell_exit_if_python_is_valid }}
         {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python
         {{ shell_exit_if_python_is_valid }}
@@ -133,15 +139,21 @@
       - raw_script: |-
           {{ shell_export }} PY{{ shell_export_eq }}/usr/bin/python
           {{ shell_exit_if_python_is_valid }}
-          {{ shell_export }} PY{{ shell_export_eq }}python2
-          {{ shell_exit_if_python_is_valid }}
           {{ shell_export }} PY{{ shell_export_eq }}python2.7
           {{ shell_exit_if_python_is_valid }}
           {{ shell_export }} PY{{ shell_export_eq }}python27
           {{ shell_exit_if_python_is_valid }}
+          {{ shell_export }} PY{{ shell_export_eq }}python2
+          {{ shell_exit_if_python_is_valid }}
           {{ shell_export }} PY{{ shell_export_eq }}python2.6
           {{ shell_exit_if_python_is_valid }}
           {{ shell_export }} PY{{ shell_export_eq }}python26
+          {{ shell_exit_if_python_is_valid }}
+          {{ shell_export }} PY{{ shell_export_eq }}pyrun2.7
+          {{ shell_exit_if_python_is_valid }}
+          {{ shell_export }} PY{{ shell_export_eq }}pyrun
+          {{ shell_exit_if_python_is_valid }}
+          {{ shell_export }} PY{{ shell_export_eq }}pypy
           {{ shell_exit_if_python_is_valid }}
           {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python
           {{ shell_exit_if_python_is_valid }}
