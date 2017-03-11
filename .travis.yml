@@ -54,15 +54,12 @@ install:
   # - add userA
   - docker pull centos:latest
   - docker rm -f centos-sshd || true
-  - docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos sh -c 'yum install openssh-server && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -D'
+  - docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos sh -c 'yum --assumeyes install openssh-server tcsh && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -D'
   - docker exec -i centos-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA'
   - docker exec -i centos-sshd sh -c 'su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
   - cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; cat >> .ssh/authorized_keys'
   - docker exec -i centos-sshd sh -c 'cat ~/.ssh/authorized_keys >> /home/userA/.ssh/authorized_keys'
-  - docker exec -i centos-sshd sh -c 'yum --assumeyes install tcsh'
   - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
-  - ssh-keyscan -p 5848 localhost >> ~/.ssh/known_hosts
-  - ssh -p 5848 root@localhost true
 
 script:
   - set -e
@@ -86,6 +83,8 @@ script:
 
   # root on centos
   - echo "====== [round 3][root on centos] ======"
+  - ssh-keyscan -p 5848 localhost >> ~/.ssh/known_hosts
+  - ssh -p 5848 root@localhost true
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=5848 -vvvvv
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=5848
 
