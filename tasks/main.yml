@@ -38,16 +38,17 @@
         {{ shell_exit_if_python_is_valid }}
         exit 41
     raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
-    failed_when: ( [ detect_installed_python.rc | d(0) ]
-                   | difference([0, 41])
-                   | list
-                   | length == 1
-                 ) or ( detect_installed_python.rc | d(1) == 0
-                        and detect_installed_python.stdout_lines | last | d('') == '')
+    failed_when: detect_installed_python | failed or detect_installed_python.stdout_lines | last | d('') == ''
     changed_when: False
 
-  - block:
+  - name: set ansible_python_interpreter
+    set_fact:
+      ansible_python_interpreter: "{{ detect_installed_python.stdout_lines | last }}"
+    when: detect_installed_python.stdout_lines | last != '/usr/bin/python'
 
+  rescue:
+
+  - block:
     - name: remote is root?
       register: remote_is_root
       raw: id -u
@@ -127,9 +128,7 @@
           test -x exxo \
                {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
                {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
-               {{ shell_and }} {{ shell_export }} PY{{ shell_export_eq }}{{ exxo_deploy_dir + '/bin/python' | quote }} \
-               {{ shell_and }} {{ shell_exit_if_python_is_valid }}
-          cd {{ shell_and }} rm -rf -- {{ ('.ansible/tmp/exxo' + omit) | quote }}
+               {{ shell_and }} exit 0
           exit 55
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
 
@@ -162,17 +161,18 @@
           echo "Unsupported platforms!"
           exit 43
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
-      failed_when: detect_installed_python_2.rc | d(1) != 0 or detect_installed_python_2.stdout_lines | last | d('') == ''
+      failed_when: detect_installed_python_2 | failed or detect_installed_python_2.stdout_lines | last | d('') == ''
       changed_when: False
 
-    when: detect_installed_python.rc | d(1) == 41
+    - name: set ansible_python_interpreter after installing
+      set_fact:
+        ansible_python_interpreter: "{{ detect_installed_python_2.stdout_lines | last }}"
+      when: detect_installed_python_2.stdout_lines | last != '/usr/bin/python'
 
-  - name: set ansible_python_interpreter
-    set_fact:
-      ansible_python_interpreter: "{{ ( (detect_installed_python.rc | d(1) == 0)
-                                      | ternary(detect_installed_python, detect_installed_python_2) ).stdout_lines | last }}"
-    when: "{{ ( (detect_installed_python.rc | d(1) == 0)
-              | ternary(detect_installed_python, detect_installed_python_2) ).stdout_lines | last != '/usr/bin/python' }}"
+    always:
+    - name: cleanup downloading files
+      raw: rm -rf {{ ('~/.ansible/tmp/exxo' + omit) | quote }}
+      ignore_errors: True
 
   vars:
   - shell_exec: >-
