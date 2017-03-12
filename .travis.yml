@@ -85,7 +85,6 @@ script:
   - echo "====== [round 3][root on centos] ======"
   - ssh-keyscan -p 5848 localhost >> ~/.ssh/known_hosts
   - ssh -p 5848 root@localhost true
-  - docker exec -i centos-sshd sh -c 'yum erase python python-devel yum-utils'
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=5848
 
   # non root on centos
