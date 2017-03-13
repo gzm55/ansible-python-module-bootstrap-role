@@ -129,6 +129,10 @@
                {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
                {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
                {{ shell_and }} exit 0
+          echo instsall err is {{ shell_err_code }}
+          du -h -- {{ exxo_deploy_dir | quote }}
+          {{ exxo_deploy_dir | quote }}/bin/python -c 'import sys; sys.exit(not (sys.hexversion >= 0x02060000 and sys.hexversion < 0x03000000))'
+          echo python err is {{ shell_err_code }}
           exit 55
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
 
@@ -178,6 +182,8 @@
   always:
   - name: in top always block
     ping:
+    when:
+    - ansible_python_interpreter is defined or detect_installed_python | succeeded or detect_installed_python_2 | succeeded
 
   vars:
   - shell_exec: >-
@@ -207,7 +213,7 @@
         {{ shell_and }} exit 0
   - exxo_installer_version: "0"
   when:
-  - ansible_python_interpreter | d('') == '' or detect_installed_python_2 is defined
+  - ansible_python_interpreter | d('') == '' or detect_installed_python is defined or installing_python is defined
 
 - name: test ping
   ping:
