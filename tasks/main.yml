@@ -175,6 +175,10 @@
       ignore_errors: True
       changed_when: False
 
+  always:
+  - name: in top always block
+    ping:
+
   vars:
   - shell_exec: >-
         {{ ( [ansible_shell_type | d('sh')]
