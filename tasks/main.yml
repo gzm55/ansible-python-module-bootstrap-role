@@ -173,6 +173,7 @@
     - name: cleanup downloading files
       raw: rm -rf {{ ('~/.ansible/tmp/exxo' + omit) | quote }}
       ignore_errors: True
+      changed_when: False
 
   vars:
   - shell_exec: >-

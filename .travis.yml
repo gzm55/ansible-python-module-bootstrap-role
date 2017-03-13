@@ -70,8 +70,9 @@ script:
 
   # root on alpine
   - echo "====== [round 1][root on alpine] ======"
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_shell_type=fish -e ansible_shell_executable=/usr/bin/fish -vvvvv
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_shell_type=fish -e ansible_shell_executable=/usr/bin/fish
-  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_shell_type=fish -e ansible_shell_executable=/usr/bin/fish
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_python_interpreter=/usr/bin/python -vvvvv
 
   # non root on alpine
   - echo "====== [round 2][non-root on alpine] ======"
