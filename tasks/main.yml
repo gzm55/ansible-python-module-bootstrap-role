@@ -38,7 +38,7 @@
         {{ shell_exit_if_python_is_valid }}
         exit 41
     raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
-    failed_when: detect_installed_python | failed or detect_installed_python.stdout_lines | last | d('') == ''
+    failed_when: detect_installed_python.rc | d(500) != 0 or detect_installed_python.stdout_lines | last | d('') == ''
     changed_when: False
 
   - name: set ansible_python_interpreter
@@ -161,7 +161,7 @@
           echo "Unsupported platforms!"
           exit 43
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
-      failed_when: detect_installed_python_2 | failed or detect_installed_python_2.stdout_lines | last | d('') == ''
+      failed_when: detect_installed_python_2.rc | d(500) != 0 or detect_installed_python_2.stdout_lines | last | d('') == ''
       changed_when: False
 
     - name: set ansible_python_interpreter after installing
@@ -206,7 +206,8 @@
         {{ shell_and }} {{ shell_which }} "$PY"
         {{ shell_and }} exit 0
   - exxo_installer_version: "0"
-  when: ansible_python_interpreter is not defined
+  when:
+  - ansible_python_interpreter | d('') == '' or detect_installed_python_2 is defined
 
 - name: test ping
   ping:
