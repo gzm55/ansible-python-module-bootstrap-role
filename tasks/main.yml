@@ -130,6 +130,7 @@
           test -x exxo \
                {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
                {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
+               {{ shell_and }} echo expand done \
                {{ shell_and }} exit 0
           echo instsall err is {{ shell_err_code }}
           du -h -- {{ exxo_deploy_dir | quote }}
