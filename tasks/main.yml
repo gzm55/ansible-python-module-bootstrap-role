@@ -85,6 +85,7 @@
       vars:
       - exxo_deploy_dir: "{{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary('/opt', '/var/tmp') }}/exxo-python-{{ exxo_version }}-{{ exxo_installer_version }}"
       - raw_script: |-
+          {{ shell_exec | quote }} --version
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' apt-get', 'false') }} \
               {{ shell_and }} {{ shell_export }} DEBIAN_FRONTEND{{ shell_export_eq }}noninteractive \
               {{ shell_and }} apt-get --quiet=2 --option 'Acquire::Languages=none' update \
