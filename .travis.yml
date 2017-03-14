@@ -89,8 +89,8 @@ script:
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=5848
 
   # non root on centos
+  #- docker exec -i centos-sshd sh -c 'mv /usr/bin/python /usr/bin/python.bak'
   - echo "====== [round 4][non-root on centos] ======"
-  - docker exec -i centos-sshd sh -c 'mv /usr/bin/python /usr/bin/python.bak'
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh -vvvvv
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
 
