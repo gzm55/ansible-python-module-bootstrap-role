@@ -3,7 +3,3 @@
   gather_facts: False
   roles:
     - ansible-python-module-bootstrap-role
-  tasks:
-    - debug: msg='after role'
-    - name: ping after role
-      ping:
