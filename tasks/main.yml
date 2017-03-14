@@ -36,7 +36,7 @@
         {{ shell_exit_if_python_is_valid }}
         {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python
         {{ shell_exit_if_python_is_valid }}
-        exit 41
+        {{ shell_exit }} 41
     raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
     failed_when: detect_installed_python.rc | d(500) != 0 or detect_installed_python.stdout_lines | last | d('') == ''
     changed_when: False
@@ -90,39 +90,39 @@
               {{ shell_and }} {{ shell_export }} DEBIAN_FRONTEND{{ shell_export_eq }}noninteractive \
               {{ shell_and }} apt-get --quiet=2 --option 'Acquire::Languages=none' update \
               {{ shell_and }} apt-get --quiet=2 --assume-yes install python python-dev python-apt \
-              {{ shell_and }} exit 0
+              {{ shell_and }} {{ shell_exit }} 0
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' zypper', 'false') }} \
               {{ shell_and }} zypper --quiet refresh \
               {{ shell_and }} zypper --quiet --non-interactive install --auto-agree-with-licenses python python-devel python-xml \
-              {{ shell_and }} exit 0
+              {{ shell_and }} {{ shell_exit }} 0
           {{ shell_which }} zypper
           test {{ shell_err_code }} != 0 {{ shell_and }} \
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' yum', 'false') }} \
               {{ shell_and }} yum --quiet makecache fast \
               {{ shell_and }} yum --quiet --assumeyes install python python-devel yum-utils \
-              {{ shell_and }} exit 0
+              {{ shell_and }} {{ shell_exit }} 0
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' pacman', 'false') }} \
               {{ shell_and }} pacman --sync --quiet --noconfirm --refresh python2 \
-              {{ shell_and }} exit 0
+              {{ shell_and }} {{ shell_exit }} 0
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' dnf', 'false') }} \
               {{ shell_and }} dnf --quiet makecache fast \
               {{ shell_and }} dnf --quiet --assumeyes install python python-devel python2-dnf \
-              {{ shell_and }} exit 0
+              {{ shell_and }} {{ shell_exit }} 0
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' emerge', 'false') }} \
               {{ shell_and }} emerge --quiet --sync \
               {{ shell_and }} emerge --quiet --ask n '=dev-lang/python-2*' gentoolkit \
-              {{ shell_and }} exit 0
+              {{ shell_and }} {{ shell_exit }} 0
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' apk', 'false') }} \
               {{ shell_and }} apk add --quiet --update-cache python \
-              {{ shell_and }} exit 0
+              {{ shell_and }} {{ shell_exit }} 0
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' pkg', 'false') }} \
               {{ shell_and }} pkg install -y python27 \
-              {{ shell_and }} exit 0
-          {{ (remote_linux_x64_gblic.rc | d(0) == 42) | ternary('true', 'exit 50') }}
-          {{ shell_which }} wget {{ shell_or }} {{ shell_which }} curl {{ shell_or }} exit 51
-          cd {{ shell_or }} exit 52
-          mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} exit 53
-          cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} exit 54
+              {{ shell_and }} {{ shell_exit }} 0
+          {{ (remote_linux_x64_gblic.rc | d(0) == 42) | ternary('true', shell_exit + ' 50') }}
+          {{ shell_which }} wget {{ shell_or }} {{ shell_which }} curl {{ shell_or }} {{ shell_exit }} 51
+          cd {{ shell_or }} {{ shell_exit }} 52
+          mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 53
+          cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 54
           {{ shell_which }} wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -
           test {{ shell_err_code }} != 0 \
                {{ shell_and }} rm -f exxo \
@@ -132,16 +132,17 @@
                {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
                {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
                {{ shell_and }} echo expand done \
-               {{ shell_and }} exit 0 \
+               {{ shell_and }} {{ shell_exit }} 0 \
                {{ shell_and }} echo expand done after exit
+          {{ shell_exit }} 55
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
 
-#test {{ shell_err_code }} != 0 {{ shell_or }} exit 0
+#test {{ shell_err_code }} != 0 {{ shell_or }} {{ shell_exit }} 0
 #echo instsall err is {{ shell_err_code }}
 #du -h -- {{ exxo_deploy_dir | quote }}
 #{{ exxo_deploy_dir | quote }}/bin/python -c 'import sys; sys.exit(not (sys.hexversion >= 0x02060000 and sys.hexversion < 0x03000000))'
 #echo python err is {{ shell_err_code }}
-#exit 55
+#{{ shell_exit }} 55
 
     - name: detect installed python again
       register: detect_installed_python_2
@@ -170,7 +171,7 @@
           {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python
           {{ shell_exit_if_python_is_valid }}
           echo "Unsupported platforms!"
-          exit 43
+          {{ shell_exit }} 43
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
       failed_when: detect_installed_python_2.rc | d(500) != 0 or detect_installed_python_2.stdout_lines | last | d('') == ''
       changed_when: False
@@ -210,16 +211,17 @@
              | length == 1 )
            | ternary(ansible_shell_type, 'sh')
         }}
-  - shell_err_code:  "{{ (shell_type == 'sh')   | ternary('$?',     '$status'   ) }}"
-  - shell_and:       "{{ (shell_type == 'fish') | ternary('; and',  '&&'        ) }}"
-  - shell_or:        "{{ (shell_type == 'fish') | ternary('; or',   '||'        ) }}"
-  - shell_export:    "{{ (shell_type == 'csh')  | ternary('setenv', 'export'    ) }}"
-  - shell_export_eq: "{{ (shell_type == 'csh')  | ternary(' ',      '='         ) }}"
-  - shell_which:     "{{ (shell_type == 'csh')  | ternary('which',  'command -v') }}"
+  - shell_err_code:  "{{ (shell_type == 'sh')   | ternary('$?',        '$status'   ) }}"
+  - shell_and:       "{{ (shell_type == 'fish') | ternary('; and',     '&&'        ) }}"
+  - shell_or:        "{{ (shell_type == 'fish') | ternary('; or',      '||'        ) }}"
+  - shell_export:    "{{ (shell_type == 'csh')  | ternary('setenv',    'export'    ) }}"
+  - shell_export_eq: "{{ (shell_type == 'csh')  | ternary(' ',         '='         ) }}"
+  - shell_which:     "{{ (shell_type == 'csh')  | ternary('which',     'command -v') }}"
+  - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
   - shell_exit_if_python_is_valid: >
         eval \""$PY"\"" -c 'import sys; sys.exit(not (sys.hexversion >= 0x02060000 and sys.hexversion < 0x03000000))'"
         {{ shell_and }} {{ shell_which }} "$PY"
-        {{ shell_and }} exit 0
+        {{ shell_and }} {{ shell_exit }} 0
   - exxo_installer_version: "0"
   when:
   - ansible_python_interpreter | d('') == '' or detect_installed_python is defined or installing_python is defined
