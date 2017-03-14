@@ -208,7 +208,8 @@
   - shell_export_eq: "{{ (shell_type == 'csh')  | ternary(' ',         '='         ) }}"
   - shell_which:     "{{ (shell_type == 'csh')  | ternary('which',     'command -v') }}"
   - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
-  - shell_newline:   "{{ (shell_type == 'csh')  | ternary('; \',       ''          ) }}"
+  - shell_newline:   "{{ (shell_type == 'csh')  | ternary('; \\' | regex_replace('.$', ''),
+                                                                       '') }}"
   - shell_exit_if_python_is_valid: >
         eval \""$PY"\"" -c 'import sys; sys.exit(not (sys.hexversion >= 0x02060000 and sys.hexversion < 0x03000000))'"{{ shell_newline }}
         {{ shell_and }} {{ shell_which }} "$PY"{{ shell_newline }}
