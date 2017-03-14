@@ -45,6 +45,7 @@
     set_fact:
       ansible_python_interpreter: "{{ detect_installed_python.stdout_lines | last }}"
     when:
+    - detect_installed_python | skipped == False
     - detect_installed_python | succeeded
     - detect_installed_python.stdout_lines | last != '/usr/bin/python'
 
@@ -180,6 +181,7 @@
       set_fact:
         ansible_python_interpreter: "{{ detect_installed_python_2.stdout_lines | last }}"
       when:
+      - detect_installed_python_2 | skipped == False
       - detect_installed_python_2 | succeeded
       - detect_installed_python_2.stdout_lines | last != '/usr/bin/python'
 
@@ -192,8 +194,10 @@
   always:
   - name: in top always block
     ping:
-    when:
-    - ansible_python_interpreter is defined or detect_installed_python | succeeded or detect_installed_python_2 | succeeded
+    when: >
+      ansible_python_interpreter is defined
+      or (detect_installed_python | skipped == False and detect_installed_python | succeeded)
+      or (detect_installed_python_2 | skipped == False and detect_installed_python_2 | succeeded)
 
   vars:
   - shell_exec: >-
