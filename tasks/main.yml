@@ -15,27 +15,27 @@
     vars:
     - raw_script: |-
         {{ shell_export }} PY{{ shell_export_eq }}/usr/bin/python{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}python2.7{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}python27{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}python2{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}python2.6{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}python26{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}pyrun2.7{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}pyrun{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}pypy{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python{{ shell_newline }}
-        {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
         {{ shell_exit }} 41
     raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
     failed_when: detect_installed_python.rc | d(500) != 0 or detect_installed_python.stdout_lines | last | d('') == ''
@@ -140,27 +140,27 @@
       vars:
       - raw_script: |-
           {{ shell_export }} PY{{ shell_export_eq }}/usr/bin/python{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}python2.7{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}python27{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}python2{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}python2.6{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}python26{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}pyrun2.7{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}pyrun{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}pypy{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           {{ shell_export }} PY{{ shell_export_eq }}{{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python{{ shell_newline }}
-          {{ shell_exit_if_python_is_valid }}
+          {{ shell_exit_if_python_is_valid }}{{ shell_newline }}
           echo "Unsupported platforms!"{{ shell_newline }}
           {{ shell_exit }} 43
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
@@ -211,10 +211,10 @@
   - shell_which:     "{{ (shell_type == 'csh')  | ternary('which',     'command -v') }}"
   - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
   - shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
-  - shell_exit_if_python_is_valid: >
-        eval \""$PY"\"" -c 'import sys; sys.exit(not (sys.hexversion >= 0x02060000 and sys.hexversion < 0x03000000))'"{{ shell_newline }}
-        {{ shell_and }} {{ shell_which }} "$PY"{{ shell_newline }}
-        {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+  - shell_exit_if_python_is_valid: >-
+        eval \""$PY"\"" -c 'import sys; sys.exit(not (sys.hexversion >= 0x02060000 and sys.hexversion < 0x03000000))'"
+        {{ shell_and }} {{ shell_which }} "$PY"
+        {{ shell_and }} {{ shell_exit }} 0
   - exxo_installer_version: "0"
   when:
   - ansible_python_interpreter | d('') == '' or detect_installed_python is defined or installing_python is defined
