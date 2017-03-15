@@ -13,9 +13,6 @@ galaxy_info:
   - name: GenericLinux
     versions:
     - any
-  - name: Windows
-    versions:
-    - all
   - name: GenericUNIX
     versions:
     - any
