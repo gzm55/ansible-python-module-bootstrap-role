@@ -47,18 +47,6 @@ install:
   - ssh-keyscan -p 4848 localhost >> ~/.ssh/known_hosts
   - ssh -p 4848 root@localhost true
 
-  # Start a centos 5 sshd container for testing
-  # - listen on localhost:6848
-  # - enable root login
-  # - root login via pubkey
-  # - add userA
-  - docker pull centos:5
-  - docker rm -f centos5-sshd || true
-  - docker run -p 6848:22 --name centos5-sshd --hostname centos5-sshd -d centos:5 sh -c 'yum -y install openssh-server curl bzip2 && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
-  - docker exec -i centos5-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA; su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
-  - cat ~/.ssh/id_rsa.pub | docker exec -i centos5-sshd sh -c 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys /home/userA/.ssh/authorized_keys'
-  - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:6848 || true
-
   # Start a centos 7 sshd container for testing
   # - listen on localhost:5848
   # - enable root login
@@ -67,10 +55,8 @@ install:
   - docker pull centos:7
   - docker rm -f centos-sshd || true
   - docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos:7 sh -c 'yum --assumeyes install openssh-server tcsh && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
-  - docker exec -i centos-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA'
-  - docker exec -i centos-sshd sh -c 'su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
-  - cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; cat >> .ssh/authorized_keys'
-  - docker exec -i centos-sshd sh -c 'cat ~/.ssh/authorized_keys >> /home/userA/.ssh/authorized_keys'
+  - docker exec -i centos-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA; su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
+  - cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys /home/userA/.ssh/authorized_keys'
   - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
 
 script:
@@ -104,18 +90,6 @@ script:
   - echo "====== [round 4][non-root on centos 7] ======"
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
-
-  # non root on centos 5
-  - echo "====== [round 5][non-root on centos 5] ======"
-  - ssh-keyscan -p 6848 localhost >> ~/.ssh/known_hosts || { sleep 20; ssh-keyscan -p 6848 localhost >> ~/.ssh/known_hosts; }
-  - ssh -p 6848 userA@localhost true
-  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=6848 -e exxo_url=https://github.com/gzm55/ansible-python-module-bootstrap-role/releases/download/upload-exxo-bz2/exxo-0.0.7.tar.bz2 -e exxo_untar_flags=j -vvvvv
-  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=6848 -e exxo_url=https://github.com/gzm55/ansible-python-module-bootstrap-role/releases/download/upload-exxo-bz2/exxo-0.0.7.tar.bz2 -e exxo_untar_flags=j
-
-  # root on centos 5
-  - echo "====== [round 5][root on centos 5] ======"
-  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=6848 -e exxo_url=https://github.com/gzm55/ansible-python-module-bootstrap-role/releases/download/upload-exxo-bz2/exxo-0.0.7.tar.bz2 -e exxo_untar_flags=j -vvvvv
-  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=6848 -e exxo_url=https://github.com/gzm55/ansible-python-module-bootstrap-role/releases/download/upload-exxo-bz2/exxo-0.0.7.tar.bz2 -e exxo_untar_flags=j
 
 #notifications:
 #  webhooks: https://galaxy.ansible.com/api/v1/notifications/
