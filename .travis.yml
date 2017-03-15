@@ -54,7 +54,7 @@ install:
   # - add userA
   - docker pull centos:5
   - docker rm -f centos5-sshd || true
-  - docker run -p 6848:22 --name centos5-sshd --hostname centos5-sshd -d centos:5 sh -c 'yum -y install openssh-server curl && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
+  - docker run -p 6848:22 --name centos5-sshd --hostname centos5-sshd -d centos:5 sh -c 'yum -y install openssh-server curl bzip2 && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
   - docker exec -i centos5-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA; su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
   - cat ~/.ssh/id_rsa.pub | docker exec -i centos5-sshd sh -c 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys /home/userA/.ssh/authorized_keys'
   - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:6848 || true
