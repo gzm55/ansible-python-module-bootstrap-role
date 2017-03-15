@@ -90,7 +90,7 @@
           test {{ shell_err_code }} != 0 {{ shell_and }} \
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' yum', 'false') }} \
               {{ shell_and }} yum --quiet makecache fast \
-              {{ shell_and }} yum --quiet --assumeyes install python python-devel yum-utils \
+              {{ shell_and }} yum --quiet -y install python python-devel yum-utils \
               {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
           {{ ( remote_is_root.stdout_lines | first | d('') == '0') | ternary(shell_which + ' pacman', 'false') }} \
               {{ shell_and }} pacman --sync --quiet --noconfirm --refresh python2 \
