@@ -200,6 +200,6 @@
   when:
   - ansible_python_interpreter | d('') == '' or detect_installed_python is defined or installing_python is defined
 
-- name: test ping at last
-  ping:
-  when: True
+- block:
+  - name: test ping at last
+    ping:
