@@ -199,7 +199,3 @@
   - exxo_installer_version: "0"
   when:
   - ansible_python_interpreter | d('') == '' or detect_installed_python is defined or installing_python is defined
-
-- block:
-  - name: test ping at last
-    ping:
