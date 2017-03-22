@@ -16,7 +16,7 @@ addons:
 
 install:
   # Install ansible
-  - pip install ansible
+  - pip install ansible ansible-lint
 
   # Check ansible version
   - ansible --version
@@ -65,6 +65,8 @@ script:
 
   # Basic role syntax check
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+  - ansible-lint .
+  - ansible-lint tests/test.yml
 
   # root on alpine
   - echo "====== [round 1][root on alpine] ======"
@@ -90,6 +92,12 @@ script:
   - echo "====== [round 4][non-root on centos 7] ======"
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
+
+  # non root on alpine using docker connection
+  - echo "====== [round 5][non-root on alpine with docker connection] ======"
+  - docker exec -i alpine-sshd sh -c 'apk del python; rm -rf /var/tmp/exxo-python*'
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_connection=docker
+  - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_connection=docker
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
