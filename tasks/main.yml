@@ -44,8 +44,8 @@
     set_fact:
       ansible_python_interpreter: "{{ detect_installed_python.stdout_lines | last }}"
     when:
-    - detect_installed_python | skipped == False
-    - detect_installed_python | succeeded
+    - detect_installed_python is not skipped
+    - detect_installed_python is succeeded
     - detect_installed_python.stdout_lines | last != '/usr/bin/python'
 
   rescue:
@@ -162,8 +162,8 @@
       set_fact:
         ansible_python_interpreter: "{{ detect_installed_python_2.stdout_lines | last }}"
       when:
-      - detect_installed_python_2 | skipped == False
-      - detect_installed_python_2 | succeeded
+      - detect_installed_python_2 is not skipped
+      - detect_installed_python_2 is succeeded
       - detect_installed_python_2.stdout_lines | last != '/usr/bin/python'
 
     always:
