@@ -8,7 +8,8 @@ is a Linux X64 with glibc, we'll try to install a exxo python.
 Requirements
 ------------
 
-ansible >= 2.0
+- `python_module_bootstrap >= 1.0` requires `ansible >= 2.5`
+- `python_module_bootstrap < 1.0` requires `ansible >= 2.0`
 
 Role Variables
 --------------

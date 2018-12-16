@@ -14,19 +14,27 @@
     register: detect_installed_python
     vars:
     - raw_script: |-
-        /usr/bin/python {{ shell_exit_if_python_is_valid }}
-        python2.7       {{ shell_exit_if_python_is_valid }}
-        python27        {{ shell_exit_if_python_is_valid }}
-        python2         {{ shell_exit_if_python_is_valid }}
-        python2.6       {{ shell_exit_if_python_is_valid }}
-        python26        {{ shell_exit_if_python_is_valid }}
-        pyrun2.7        {{ shell_exit_if_python_is_valid }}
-        pyrun           {{ shell_exit_if_python_is_valid }}
-        pypy            {{ shell_exit_if_python_is_valid }}
+        /usr/bin/python  {{ shell_exit_if_python_is_valid }}
+        python2.7        {{ shell_exit_if_python_is_valid }}
+        python27         {{ shell_exit_if_python_is_valid }}
+        python2          {{ shell_exit_if_python_is_valid }}
+        python2.6        {{ shell_exit_if_python_is_valid }}
+        python26         {{ shell_exit_if_python_is_valid }}
+        /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
+        python3.7        {{ shell_exit_if_python_is_valid }}
+        python37         {{ shell_exit_if_python_is_valid }}
+        python3          {{ shell_exit_if_python_is_valid }}
+        python3.6        {{ shell_exit_if_python_is_valid }}
+        python36         {{ shell_exit_if_python_is_valid }}
+        python3.5        {{ shell_exit_if_python_is_valid }}
+        python35         {{ shell_exit_if_python_is_valid }}
+        pyrun2.7         {{ shell_exit_if_python_is_valid }}
+        pyrun            {{ shell_exit_if_python_is_valid }}
+        pypy             {{ shell_exit_if_python_is_valid }}
         {{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
-                        {{ shell_exit_if_python_is_valid }}
+                         {{ shell_exit_if_python_is_valid }}
         {{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
-                        {{ shell_exit_if_python_is_valid }}
+                         {{ shell_exit_if_python_is_valid }}
         {{ shell_exit }} 41
     raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
     failed_when: detect_installed_python.rc | d(500) != 0 or detect_installed_python.stdout_lines | last | d('') == ''
@@ -126,6 +134,7 @@
           {{ shell_exit }} 55
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
 
+      ## here only check python 2, cause we only install python2
     - name: detect installed python again
       register: detect_installed_python_2
       vars:
@@ -172,8 +181,7 @@
         {{ ( [ansible_shell_type | d('sh')]
              | intersect(['sh', 'csh', 'fish'])
              | list
-             | length == 1
-             and ansible_version.full | version_compare('2.1', '>='))
+             | length == 1 )
            | ternary(ansible_shell_executable, '/bin/sh')
         }}
   - shell_type: >-
@@ -194,7 +202,7 @@
   - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
   - shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
   - shell_exit_if_python_is_valid: >-
-        -c 'import sys; p = sys.executable if sys.hexversion >= 0x02060000 and sys.hexversion < 0x04000000 else ""; print(p) if p != "" else sys.exit(1)'
+        -c 'import sys; v=sys.hexversion >> 16; print(sys.executable) if (0x206 <= v and v < 0x300) or 0x305 <= v else sys.exit(1)'
         {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
   - exxo_installer_version: "0"
   when:
