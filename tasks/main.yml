@@ -83,7 +83,8 @@
     - name: installing python
       register: installing_python
       vars:
-      - exxo_deploy_dir: "{{ ( remote_is_root.stdout_lines | first | d == '0') | ternary('/opt', '/var/tmp') }}/exxo-python-{{ exxo_version }}-{{ exxo_installer_version }}"
+      - exxo_deploy_base: "{{ ( remote_is_root.stdout_lines | first | d == '0') | ternary('/opt', '/var/tmp') }}"
+      - exxo_deploy_dir: "{{ exxo_deploy_base }}/exxo-python-{{ exxo_version }}-{{ exxo_installer_version }}"
       - raw_script: |-
           {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apt-get', 'false') }} \
               {{ shell_and }} {{ shell_export }} DEBIAN_FRONTEND{{ shell_export_eq }}noninteractive \
@@ -92,7 +93,8 @@
               {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
           {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' zypper', 'false') }} \
               {{ shell_and }} zypper --quiet refresh \
-              {{ shell_and }} zypper --quiet --non-interactive install --auto-agree-with-licenses python python-devel python-xml \
+              {{ shell_and }} zypper --quiet --non-interactive install --auto-agree-with-licenses python python-devel \
+              {{ shell_and }} zypper --quiet --non-interactive install --auto-agree-with-licenses python-xml \
               {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
           {{ shell_which }} zypper{{ shell_newline }}
           test {{ shell_err_code }} != 0 {{ shell_and }} \
@@ -118,15 +120,19 @@
               {{ shell_and }} pkg install -y python27 \
               {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
           {{ (remote_linux_x64_gblic.rc | d(0) == 42) | ternary('true', shell_exit + ' 50') }}{{ shell_newline }}
-          {{ shell_which }} wget {{ shell_or }} {{ shell_which }} curl {{ shell_or }} {{ shell_exit }} 51{{ shell_newline }}
+          {{ shell_which }} wget \
+          {{ shell_or }} {{ shell_which }} curl \
+          {{ shell_or }} {{ shell_exit }} 51{{ shell_newline }}
           cd {{ shell_or }} {{ shell_exit }} 52{{ shell_newline }}
           mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 53{{ shell_newline }}
           cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 54{{ shell_newline }}
-          {{ shell_which }} wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
+          {{ shell_which }} wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} \
+                            | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
           test {{ shell_err_code }} != 0 \
                {{ shell_and }} rm -f exxo \
                {{ shell_and }} {{ shell_which }} curl \
-               {{ shell_and }} curl -L --insecure -o - -- {{ exxo_url | quote }}  | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
+               {{ shell_and }} curl -L --insecure -o - -- {{ exxo_url | quote }} \
+                               | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
           test -x exxo \
                {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
                {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
@@ -202,7 +208,7 @@
   - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
   - shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
   - shell_exit_if_python_is_valid: >-
-        -c 'import sys; v=sys.hexversion >> 16; print(sys.executable) if (0x206 <= v and v < 0x300) or 0x305 <= v else sys.exit(1)'
+        -c 'import sys; v=sys.hexversion>>16; print(sys.executable) if (0x206<=v and v<0x300) or 0x305<=v else exit(1)'
         {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
   - exxo_installer_version: "0"
   when:

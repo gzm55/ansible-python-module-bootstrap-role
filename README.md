@@ -1,9 +1,12 @@
 python_module_bootstrap
 =======================
 
-Bootstrap python for ansible python modules.
-First try to install python using some package management, then if the remote host
-is a Linux X64 with glibc, we'll try to install a exxo python.
+Bootstrap python for ansible python modules and detect correct `ansible_python_interpreter` for python3.
+When bootstraping, first try to install python2 using some package management, then if the remote host
+is a Linux X64 with glibc, we'll try to install a exxo python for both root user and non-root users.
+
+The detecting and bootstraping scripts to be executed by `raw` module are all compatible with `sh`(default),
+`csh` and `fish` ansible shell types, but do not work with `powershell`.
 
 Requirements
 ------------
