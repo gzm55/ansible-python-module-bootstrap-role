@@ -14,20 +14,24 @@
     register: detect_installed_python
     vars:
     - raw_script: |-
+        /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
+        python3          {{ shell_exit_if_python_is_valid }}
+        python3.9        {{ shell_exit_if_python_is_valid }}
+        python39         {{ shell_exit_if_python_is_valid }}
+        python3.8        {{ shell_exit_if_python_is_valid }}
+        python38         {{ shell_exit_if_python_is_valid }}
+        python3.7        {{ shell_exit_if_python_is_valid }}
+        python37         {{ shell_exit_if_python_is_valid }}
+        python3.6        {{ shell_exit_if_python_is_valid }}
+        python36         {{ shell_exit_if_python_is_valid }}
+        python3.5        {{ shell_exit_if_python_is_valid }}
+        python35         {{ shell_exit_if_python_is_valid }}
         /usr/bin/python  {{ shell_exit_if_python_is_valid }}
         python2.7        {{ shell_exit_if_python_is_valid }}
         python27         {{ shell_exit_if_python_is_valid }}
         python2          {{ shell_exit_if_python_is_valid }}
         python2.6        {{ shell_exit_if_python_is_valid }}
         python26         {{ shell_exit_if_python_is_valid }}
-        /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
-        python3.7        {{ shell_exit_if_python_is_valid }}
-        python37         {{ shell_exit_if_python_is_valid }}
-        python3          {{ shell_exit_if_python_is_valid }}
-        python3.6        {{ shell_exit_if_python_is_valid }}
-        python36         {{ shell_exit_if_python_is_valid }}
-        python3.5        {{ shell_exit_if_python_is_valid }}
-        python35         {{ shell_exit_if_python_is_valid }}
         pyrun2.7         {{ shell_exit_if_python_is_valid }}
         pyrun            {{ shell_exit_if_python_is_valid }}
         pypy             {{ shell_exit_if_python_is_valid }}
