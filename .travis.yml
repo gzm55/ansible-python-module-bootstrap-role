@@ -78,7 +78,7 @@ script:
 
   # non root on alpine
   - echo "====== [round 2][non-root on alpine] ======"
-  - docker exec -i alpine-sshd sh -c 'apk del python'
+  - docker exec -i alpine-sshd sh -c 'apk del python3'
   - true && ! ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
   - docker exec -i alpine-sshd sh -c 'export GLIBC_VERSION=2.28-r0 && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && curl -Lo glibc.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" && curl -Lo glibc-bin.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" && apk add glibc-bin.apk glibc.apk && /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib && echo -n "hosts:">>/etc/nsswitch.conf && echo " files mdns4_minimal [NOTFOUND=return] dns mdns4" >> /etc/nsswitch.conf'
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
@@ -97,13 +97,13 @@ script:
 
   # non root on alpine using docker connection
   - echo "====== [round 5][non-root on alpine with docker connection] ======"
-  - docker exec -i alpine-sshd sh -c 'apk del python; rm -rf /var/tmp/exxo-python*'
+  - docker exec -i alpine-sshd sh -c 'apk del python3; rm -rf /var/tmp/exxo-python*'
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_connection=docker -e ansible_host=alpine-sshd
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_connection=docker -e ansible_host=alpine-sshd
 
   # root on alpine with python3
   - echo "====== [round 6][root on alpine with python3] ======"
-  - docker exec -i alpine-sshd sh -c 'apk del python; rm -rf /var/tmp/exxo-python*; apk add python3'
+  - docker exec -i alpine-sshd sh -c 'apk del python3; rm -rf /var/tmp/exxo-python*; apk add python3'
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root
   - ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root
 
