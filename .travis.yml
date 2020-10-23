@@ -1,6 +1,9 @@
 ---
+os: linux
+dist: xenial
+
+# non-python roles, so do not test for eol pyton 2.7
 language: python
-python: "2.7"
 
 sudo: required
 
@@ -45,7 +48,8 @@ install:
   - docker exec -i alpine-sshd sh -c 'apk add fish bc curl'
   - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:4848 || true
   - ssh-keyscan -p 4848 localhost >> ~/.ssh/known_hosts
-  - ssh -p 4848 root@localhost true
+  - echo -e "123456\n123456" | docker exec -i alpine-sshd passwd
+  - ssh -vv -p 4848 root@localhost true
 
   # Start a centos 7 sshd container for testing
   # - listen on localhost:5848
