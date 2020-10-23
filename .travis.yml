@@ -49,7 +49,7 @@ install:
   - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:4848 || true
   - ssh-keyscan -p 4848 localhost >> ~/.ssh/known_hosts
   - echo -e "123456\n123456" | docker exec -i alpine-sshd passwd
-  - ssh -vv -p 4848 root@localhost true
+  - ssh -p 4848 root@localhost true
 
   # Start a centos 7 sshd container for testing
   # - listen on localhost:5848
