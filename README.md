@@ -1,8 +1,8 @@
-python_module_bootstrap
-=======================
+python_module_bootstrap (1.0.1)
+===============================
 
-Bootstrap python for ansible python modules and detect correct `ansible_python_interpreter` for python3.
-When bootstraping, first try to install python2 using some package management, then if the remote host
+Bootstrap python for ansible python modules and detect correct `ansible_python_interpreter` for python3. When
+bootstraping, first try to install python2 (or python3 on alpine) using some package management, then if the remote host
 is a Linux X64 with glibc, we'll try to install a exxo python for both root user and non-root users.
 
 The detecting and bootstraping scripts to be executed by `raw` module are all compatible with `sh`(default),
