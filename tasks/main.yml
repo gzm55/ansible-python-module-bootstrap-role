@@ -84,6 +84,8 @@
     #   - Install `python2-dnf`, which is required by Ansible `dnf` module.
     # emerge:
     #   - Install `gentoolkit`, which contains `equery`. `gentoolkit` is also required by Ansible `portage` module.
+    # apk:
+    #   - from alpine 3.5, python 2 is not avaliable, only support install python 3
     - name: installing python
       register: installing_python
       vars:
@@ -118,6 +120,9 @@
               {{ shell_and }} emerge --quiet --ask n '=dev-lang/python-2*' gentoolkit \
               {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
           {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apk', 'false') }} \
+              {{ shell_and }} apk add --quiet --update-cache python3 \
+              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apk', 'false') }} \
               {{ shell_and }} apk add --quiet --update-cache python \
               {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
           {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' pkg', 'false') }} \
@@ -144,20 +149,31 @@
           {{ shell_exit }} 55
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
 
-      ## here only check python 2, cause we only install python2
     - name: detect installed python again
-      register: detect_installed_python_2
+      register: detect_installed_python_again
       vars:
       - raw_script: |-
-          /usr/bin/python {{ shell_exit_if_python_is_valid }}
-          python2.7       {{ shell_exit_if_python_is_valid }}
-          python27        {{ shell_exit_if_python_is_valid }}
-          python2         {{ shell_exit_if_python_is_valid }}
-          python2.6       {{ shell_exit_if_python_is_valid }}
-          python26        {{ shell_exit_if_python_is_valid }}
-          pyrun2.7        {{ shell_exit_if_python_is_valid }}
-          pyrun           {{ shell_exit_if_python_is_valid }}
-          pypy            {{ shell_exit_if_python_is_valid }}
+          /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
+          python3          {{ shell_exit_if_python_is_valid }}
+          python3.9        {{ shell_exit_if_python_is_valid }}
+          python39         {{ shell_exit_if_python_is_valid }}
+          python3.8        {{ shell_exit_if_python_is_valid }}
+          python38         {{ shell_exit_if_python_is_valid }}
+          python3.7        {{ shell_exit_if_python_is_valid }}
+          python37         {{ shell_exit_if_python_is_valid }}
+          python3.6        {{ shell_exit_if_python_is_valid }}
+          python36         {{ shell_exit_if_python_is_valid }}
+          python3.5        {{ shell_exit_if_python_is_valid }}
+          python35         {{ shell_exit_if_python_is_valid }}
+          /usr/bin/python  {{ shell_exit_if_python_is_valid }}
+          python2.7        {{ shell_exit_if_python_is_valid }}
+          python27         {{ shell_exit_if_python_is_valid }}
+          python2          {{ shell_exit_if_python_is_valid }}
+          python2.6        {{ shell_exit_if_python_is_valid }}
+          python26         {{ shell_exit_if_python_is_valid }}
+          pyrun2.7         {{ shell_exit_if_python_is_valid }}
+          pyrun            {{ shell_exit_if_python_is_valid }}
+          pypy             {{ shell_exit_if_python_is_valid }}
           {{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
                           {{ shell_exit_if_python_is_valid }}
           {{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
@@ -165,16 +181,16 @@
           echo "Unsupported platforms!"{{ shell_newline }}
           {{ shell_exit }} 43
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
-      failed_when: detect_installed_python_2.rc | d(500) != 0 or not detect_installed_python_2.stdout_lines | last | d
+      failed_when: detect_installed_python_again.rc | d(500) != 0 or not detect_installed_python_again.stdout_lines | last | d
       changed_when: False
 
     - name: set ansible_python_interpreter after installing
       set_fact:
-        ansible_python_interpreter: "{{ detect_installed_python_2.stdout_lines | last }}"
+        ansible_python_interpreter: "{{ detect_installed_python_again.stdout_lines | last }}"
       when:
-      - detect_installed_python_2 is not skipped
-      - detect_installed_python_2 is succeeded
-      - detect_installed_python_2.stdout_lines | last != '/usr/bin/python'
+      - detect_installed_python_again is not skipped
+      - detect_installed_python_again is succeeded
+      - detect_installed_python_again.stdout_lines | last != '/usr/bin/python'
 
     always:
     - name: cleanup downloading files
