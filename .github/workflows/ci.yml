@@ -25,7 +25,7 @@ jobs:
       run: |
         set -x
         pip3 install -r requirements.txt
-        docker pull danielguerra/alpine-sshd
+        docker pull hermsi/alpine-sshd
         docker pull centos:7
 
         # Start a alpine sshd container for testing
@@ -34,7 +34,7 @@ jobs:
         # - root login via pubkey
         # - add userA
         docker rm -f alpine-sshd || true
-        docker run -p 4848:22 --name alpine-sshd --hostname alpine-sshd -d danielguerra/alpine-sshd sh -c 'echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -D'
+        docker run -p 4848:22 --name alpine-sshd --hostname alpine-sshd -d hermsi/alpine-sshd sh -c 'echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -D'
         docker exec -i alpine-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA'
         docker exec -i alpine-sshd sh -c 'su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
         ssh-keygen -N '' -f ~/.ssh/id_rsa

@@ -26,14 +26,14 @@
         }}
     shell_backslash: >-
                      {% raw -%}\{%- endraw %}
-    shell_err_code:  "{{ (shell_type == 'sh')   | ternary('$?', '$status') }}"
+    shell_err_code:  "{{ (shell_type == 'sh') | ternary('$?', '$status') }}"
     shell_and:       "{{ (shell_type == 'fish') | ternary('; and', '&&') }}"
     shell_or:        "{{ (shell_type == 'fish') | ternary('; or', '||') }}"
-    shell_export:    "{{ (shell_type == 'csh')  | ternary('setenv', 'export') }}"
-    shell_export_eq: "{{ (shell_type == 'csh')  | ternary(' ', '=') }}"
-    shell_which:     "{{ (shell_type == 'csh')  | ternary('which', 'command -v') }}"
-    shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit') }}"
-    shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
+    shell_export:    "{{ (shell_type == 'csh') | ternary('setenv', 'export') }}"
+    shell_export_eq: "{{ (shell_type == 'csh') | ternary(' ', '=') }}"
+    shell_which:     "{{ (shell_type == 'csh') | ternary('which', 'command -v') }}"
+    shell_exit:      "{{ (shell_type == 'csh') | ternary('eval exit', 'exit') }}"
+    shell_newline:   "{{ (shell_type == 'csh') | ternary(';' + shell_backslash, '') }}"
     shell_exit_if_python_is_valid: >-
         -c 'import sys; v=sys.hexversion>>16; print(sys.executable) if (0x206<=v and v<0x300) or 0x305<=v else exit(1)'
         {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
