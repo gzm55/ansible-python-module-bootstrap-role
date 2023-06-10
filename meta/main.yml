@@ -1,21 +1,20 @@
 galaxy_info:
+  role_name: python_module_bootstrap
+  namespace: gzm55
   author: James Z.M. Gao
   description:  Bootstrap python for ansible python modules.
 
   license: BSD
 
-  min_ansible_version: 2.5
+  min_ansible_version: "2.8"
 
   platforms:
   - name: GenericBSD
-    versions:
-    - any
+    versions: [all]
   - name: GenericLinux
-    versions:
-    - any
+    versions: [all]
   - name: GenericUNIX
-    versions:
-    - any
+    versions: [all]
 
   galaxy_tags: [system]
 

@@ -1,4 +1,4 @@
-python_module_bootstrap (1.0.1)
+python_module_bootstrap (2.0.0-dev)
 ===============================
 
 Bootstrap python for ansible python modules and detect correct `ansible_python_interpreter` for python3. When

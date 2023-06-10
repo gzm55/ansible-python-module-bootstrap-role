@@ -10,12 +10,16 @@
 
 - block:
 
-  - name: detect installed python
+  - name: Detect installed python
     register: detect_installed_python
     vars:
-    - raw_script: |-
+      raw_script: |-
         /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
         python3          {{ shell_exit_if_python_is_valid }}
+        python3.11       {{ shell_exit_if_python_is_valid }}
+        python311        {{ shell_exit_if_python_is_valid }}
+        python3.10       {{ shell_exit_if_python_is_valid }}
+        python310        {{ shell_exit_if_python_is_valid }}
         python3.9        {{ shell_exit_if_python_is_valid }}
         python39         {{ shell_exit_if_python_is_valid }}
         python3.8        {{ shell_exit_if_python_is_valid }}
@@ -40,12 +44,12 @@
         {{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
                          {{ shell_exit_if_python_is_valid }}
         {{ shell_exit }} 41
-    raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
+    ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
     failed_when: detect_installed_python.rc | d(500) != 0 or not detect_installed_python.stdout_lines | last | d
     changed_when: False
 
-  - name: set ansible_python_interpreter
-    set_fact:
+  - name: Set ansible_python_interpreter
+    ansible.builtin.set_fact:
       ansible_python_interpreter: "{{ detect_installed_python.stdout_lines | last }}"
     when:
     - detect_installed_python is not skipped
@@ -55,13 +59,13 @@
   rescue:
 
   - block:
-    - name: remote is root?
+    - name: Remote is root?
       register: remote_is_root
-      raw: id -u
+      ansible.builtin.raw: id -u
       ignore_errors: True
       changed_when: False
 
-    - name: remote is Linux X64 with gblic
+    - name: Remote is Linux X64 with gblic
       register: remote_linux_x64_gblic
       script: "{{ role_path }}/files/detect-linux-x64-gcc"
       ignore_errors: True
@@ -86,12 +90,12 @@
     #   - Install `gentoolkit`, which contains `equery`. `gentoolkit` is also required by Ansible `portage` module.
     # apk:
     #   - from alpine 3.5, python 2 is not avaliable, only support install python 3
-    - name: installing python
+    - name: Installing python
       register: installing_python
       vars:
-      - exxo_deploy_base: "{{ ( remote_is_root.stdout_lines | first | d == '0') | ternary('/opt', '/var/tmp') }}"
-      - exxo_deploy_dir: "{{ exxo_deploy_base }}/exxo-python-{{ exxo_version }}-{{ exxo_installer_version }}"
-      - raw_script: |-
+        exxo_deploy_base: "{{ ( remote_is_root.stdout_lines | first | d == '0') | ternary('/opt', '/var/tmp') }}"
+        exxo_deploy_dir: "{{ exxo_deploy_base }}/exxo-python-{{ exxo_version }}-{{ exxo_installer_version }}"
+        raw_script: |-
           {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apt-get', 'false') }} \
               {{ shell_and }} {{ shell_export }} DEBIAN_FRONTEND{{ shell_export_eq }}noninteractive \
               {{ shell_and }} apt-get --quiet=2 --option 'Acquire::Languages=none' update \
@@ -147,14 +151,18 @@
                {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
                {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
           {{ shell_exit }} 55
-      raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
+      ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
 
-    - name: detect installed python again
+    - name: Detect installed python again
       register: detect_installed_python_again
       vars:
-      - raw_script: |-
+        raw_script: |-
           /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
           python3          {{ shell_exit_if_python_is_valid }}
+          python3.11       {{ shell_exit_if_python_is_valid }}
+          python311        {{ shell_exit_if_python_is_valid }}
+          python3.10       {{ shell_exit_if_python_is_valid }}
+          python310        {{ shell_exit_if_python_is_valid }}
           python3.9        {{ shell_exit_if_python_is_valid }}
           python39         {{ shell_exit_if_python_is_valid }}
           python3.8        {{ shell_exit_if_python_is_valid }}
@@ -180,12 +188,12 @@
                           {{ shell_exit_if_python_is_valid }}
           echo "Unsupported platforms!"{{ shell_newline }}
           {{ shell_exit }} 43
-      raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
+      ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
       failed_when: detect_installed_python_again.rc | d(500) != 0 or not detect_installed_python_again.stdout_lines | last | d
       changed_when: False
 
-    - name: set ansible_python_interpreter after installing
-      set_fact:
+    - name: Set ansible_python_interpreter after installing
+      ansible.builtin.set_fact:
         ansible_python_interpreter: "{{ detect_installed_python_again.stdout_lines | last }}"
       when:
       - detect_installed_python_again is not skipped
@@ -193,43 +201,43 @@
       - detect_installed_python_again.stdout_lines | last != '/usr/bin/python'
 
     always:
-    - name: cleanup downloading files
-      raw: rm -rf {{ ('~/.ansible/tmp/exxo' + omit) | quote }}
+    - name: Cleanup downloading files
+      ansible.builtin.raw: rm -rf {{ ('~/.ansible/tmp/exxo' + omit) | quote }}
       ignore_errors: True
       changed_when: False
 
   always:
-  - name: test ping
+  - name: Test ping
     ping:
 
   vars:
-  - shell_exec: >-
+    shell_exec: >-
         {{ ( [ansible_shell_type | d('sh')]
              | intersect(['sh', 'csh', 'fish'])
              | list
              | length == 1 )
            | ternary(ansible_shell_executable, '/bin/sh')
         }}
-  - shell_type: >-
+    shell_type: >-
         {{ ( [ansible_shell_type | d]
              | intersect(['sh', 'csh', 'fish'])
              | list
              | length == 1 )
            | ternary(ansible_shell_type, 'sh')
         }}
-  - shell_backslash: >-
+    shell_backslash: >-
                      {% raw -%}\{%- endraw %}
-  - shell_err_code:  "{{ (shell_type == 'sh')   | ternary('$?',        '$status'   ) }}"
-  - shell_and:       "{{ (shell_type == 'fish') | ternary('; and',     '&&'        ) }}"
-  - shell_or:        "{{ (shell_type == 'fish') | ternary('; or',      '||'        ) }}"
-  - shell_export:    "{{ (shell_type == 'csh')  | ternary('setenv',    'export'    ) }}"
-  - shell_export_eq: "{{ (shell_type == 'csh')  | ternary(' ',         '='         ) }}"
-  - shell_which:     "{{ (shell_type == 'csh')  | ternary('which',     'command -v') }}"
-  - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
-  - shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
-  - shell_exit_if_python_is_valid: >-
+    shell_err_code:  "{{ (shell_type == 'sh')   | ternary('$?',        '$status'   ) }}"
+    shell_and:       "{{ (shell_type == 'fish') | ternary('; and',     '&&'        ) }}"
+    shell_or:        "{{ (shell_type == 'fish') | ternary('; or',      '||'        ) }}"
+    shell_export:    "{{ (shell_type == 'csh')  | ternary('setenv',    'export'    ) }}"
+    shell_export_eq: "{{ (shell_type == 'csh')  | ternary(' ',         '='         ) }}"
+    shell_which:     "{{ (shell_type == 'csh')  | ternary('which',     'command -v') }}"
+    shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
+    shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
+    shell_exit_if_python_is_valid: >-
         -c 'import sys; v=sys.hexversion>>16; print(sys.executable) if (0x206<=v and v<0x300) or 0x305<=v else exit(1)'
         {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-  - exxo_installer_version: "0"
+    exxo_installer_version: "0"
   when:
   - not ansible_python_interpreter | d or detect_installed_python is defined or installing_python is defined
