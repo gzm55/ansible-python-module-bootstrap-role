@@ -4,6 +4,7 @@ name: ci workflow
 
 env:
   ANSIBLE_ROLES_PATH: ".."
+  ANSIBLE_SSH_PIPELINING: 1
 
 jobs:
   test-job:
@@ -26,6 +27,36 @@ jobs:
         pip3 install -r requirements.txt
         docker pull danielguerra/alpine-sshd
         docker pull centos:7
+
+        # Start a alpine sshd container for testing
+        # - listen on localhost:4848
+        # - enable root login
+        # - root login via pubkey
+        # - add userA
+        docker rm -f alpine-sshd || true
+        docker run -p 4848:22 --name alpine-sshd --hostname alpine-sshd -d danielguerra/alpine-sshd sh -c 'echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -D'
+        docker exec -i alpine-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA'
+        docker exec -i alpine-sshd sh -c 'su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
+        ssh-keygen -N '' -f ~/.ssh/id_rsa
+        cat ~/.ssh/id_rsa.pub | docker exec -i alpine-sshd sh -c 'cd; umask 077; mkdir -p .ssh; cat >> .ssh/authorized_keys'
+        docker exec -i alpine-sshd sh -c 'cat ~/.ssh/authorized_keys >> /home/userA/.ssh/authorized_keys'
+        docker exec -i alpine-sshd sh -c 'apk update'
+        docker exec -i alpine-sshd sh -c 'apk add fish bc curl'
+        ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:4848 || true
+        ssh-keyscan -p 4848 localhost >> ~/.ssh/known_hosts
+        echo -e "123456\n123456" | docker exec -i alpine-sshd passwd
+        ssh -p 4848 root@localhost true
+
+        # Start a centos 7 sshd container for testing
+        # listen on localhost:5848
+        # enable root login
+        # root login via pubkey
+        # add userA
+        docker rm -f centos-sshd || true
+        docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos:7 sh -c 'yum --assumeyes install openssh-server tcsh && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
+        docker exec -i centos-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA; su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
+        cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys /home/userA/.ssh/authorized_keys'
+        ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
 
     - name: syntax check
       run: ansible-playbook tests/test.yml -i tests/inventory --syntax-check
