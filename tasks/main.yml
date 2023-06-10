@@ -171,12 +171,12 @@
         mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 53{{ shell_newline }}
         cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 54{{ shell_newline }}
         {{ shell_which }} wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} \
-                          | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
+                          | tar {{ ('x' + exxo_untar_flags + 'vf') | quote }} -{{ shell_newline }}
         test {{ shell_err_code }} != 0 \
              {{ shell_and }} rm -f exxo \
              {{ shell_and }} {{ shell_which }} curl \
              {{ shell_and }} curl -L --insecure -o - -- {{ exxo_url | quote }} \
-                             | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
+                             | tar {{ ('x' + exxo_untar_flags + 'vf') | quote }} -{{ shell_newline }}
         test -x exxo \
              {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
              {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
@@ -214,9 +214,9 @@
         pyrun2.7         {{ shell_exit_if_python_is_valid }}
         pyrun            {{ shell_exit_if_python_is_valid }}
         pypy             {{ shell_exit_if_python_is_valid }}
-        {{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
+        {{ ('/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version) | quote }}/bin/python \
                         {{ shell_exit_if_python_is_valid }}
-        {{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
+        {{ ('/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version) | quote }}/bin/python \
                         {{ shell_exit_if_python_is_valid }}
         echo "Unsupported platforms!"{{ shell_newline }}
         {{ shell_exit }} 43
