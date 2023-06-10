@@ -8,208 +8,7 @@
 #        set ansible_python_interpreter
 #    test run the ping module at last
 
-- block:
-
-  - name: Detect installed python
-    register: detect_installed_python
-    vars:
-      raw_script: |-
-        /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
-        python3          {{ shell_exit_if_python_is_valid }}
-        python3.11       {{ shell_exit_if_python_is_valid }}
-        python311        {{ shell_exit_if_python_is_valid }}
-        python3.10       {{ shell_exit_if_python_is_valid }}
-        python310        {{ shell_exit_if_python_is_valid }}
-        python3.9        {{ shell_exit_if_python_is_valid }}
-        python39         {{ shell_exit_if_python_is_valid }}
-        python3.8        {{ shell_exit_if_python_is_valid }}
-        python38         {{ shell_exit_if_python_is_valid }}
-        python3.7        {{ shell_exit_if_python_is_valid }}
-        python37         {{ shell_exit_if_python_is_valid }}
-        python3.6        {{ shell_exit_if_python_is_valid }}
-        python36         {{ shell_exit_if_python_is_valid }}
-        python3.5        {{ shell_exit_if_python_is_valid }}
-        python35         {{ shell_exit_if_python_is_valid }}
-        /usr/bin/python  {{ shell_exit_if_python_is_valid }}
-        python2.7        {{ shell_exit_if_python_is_valid }}
-        python27         {{ shell_exit_if_python_is_valid }}
-        python2          {{ shell_exit_if_python_is_valid }}
-        python2.6        {{ shell_exit_if_python_is_valid }}
-        python26         {{ shell_exit_if_python_is_valid }}
-        pyrun2.7         {{ shell_exit_if_python_is_valid }}
-        pyrun            {{ shell_exit_if_python_is_valid }}
-        pypy             {{ shell_exit_if_python_is_valid }}
-        {{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
-                         {{ shell_exit_if_python_is_valid }}
-        {{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
-                         {{ shell_exit_if_python_is_valid }}
-        {{ shell_exit }} 41
-    ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
-    failed_when: detect_installed_python.rc | d(500) != 0 or not detect_installed_python.stdout_lines | last | d
-    changed_when: False
-
-  - name: Set ansible_python_interpreter
-    ansible.builtin.set_fact:
-      ansible_python_interpreter: "{{ detect_installed_python.stdout_lines | last }}"
-    when:
-    - detect_installed_python is not skipped
-    - detect_installed_python is succeeded
-    - detect_installed_python.stdout_lines | last != '/usr/bin/python'
-
-  rescue:
-
-  - block:
-    - name: Remote is root?
-      register: remote_is_root
-      ansible.builtin.raw: id -u
-      ignore_errors: True
-      changed_when: False
-
-    - name: Remote is Linux X64 with gblic
-      register: remote_linux_x64_gblic
-      script: "{{ role_path }}/files/detect-linux-x64-gcc"
-      ignore_errors: True
-      failed_when: remote_linux_x64_gblic.rc | d(0) != 42
-      changed_when: False
-
-    # python bootstrap for ansible
-    # reference:
-    #   [0]: https://github.com/dochang/ansible-role-bootstrap/
-    #   [1]: https://github.com/bambocher/ansible-role-bootstrap/
-    # Apt:
-    #   - Install `python-apt` which is required by Ansible `apt` module.
-    # zypper:
-    #   - zypper must be checked before yum since zypper uses yum as backend.
-    #   - Install `python-xml`, because the Ansible module `zypper_repository` depends on it.
-    # yum:
-    #   - Install `yum-utils`.  Ansible `yum` module requires `repoquery`,
-    #     which is provided by `yum-utils`, to use `list` parameter.
-    # dnf:
-    #   - Install `python2-dnf`, which is required by Ansible `dnf` module.
-    # emerge:
-    #   - Install `gentoolkit`, which contains `equery`. `gentoolkit` is also required by Ansible `portage` module.
-    # apk:
-    #   - from alpine 3.5, python 2 is not avaliable, only support install python 3
-    - name: Installing python
-      register: installing_python
-      vars:
-        exxo_deploy_base: "{{ ( remote_is_root.stdout_lines | first | d == '0') | ternary('/opt', '/var/tmp') }}"
-        exxo_deploy_dir: "{{ exxo_deploy_base }}/exxo-python-{{ exxo_version }}-{{ exxo_installer_version }}"
-        raw_script: |-
-          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apt-get', 'false') }} \
-              {{ shell_and }} {{ shell_export }} DEBIAN_FRONTEND{{ shell_export_eq }}noninteractive \
-              {{ shell_and }} apt-get --quiet=2 --option 'Acquire::Languages=none' update \
-              {{ shell_and }} apt-get --quiet=2 --assume-yes install python python-dev python-apt \
-              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' zypper', 'false') }} \
-              {{ shell_and }} zypper --quiet refresh \
-              {{ shell_and }} zypper --quiet --non-interactive install --auto-agree-with-licenses python python-devel \
-              {{ shell_and }} zypper --quiet --non-interactive install --auto-agree-with-licenses python-xml \
-              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ shell_which }} zypper{{ shell_newline }}
-          test {{ shell_err_code }} != 0 {{ shell_and }} \
-          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' yum', 'false') }} \
-              {{ shell_and }} yum --quiet makecache fast \
-              {{ shell_and }} yum --quiet -y install python python-devel yum-utils \
-              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' pacman', 'false') }} \
-              {{ shell_and }} pacman --sync --quiet --noconfirm --refresh python2 \
-              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' dnf', 'false') }} \
-              {{ shell_and }} dnf --quiet makecache fast \
-              {{ shell_and }} dnf --quiet --assumeyes install python python-devel python2-dnf \
-              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' emerge', 'false') }} \
-              {{ shell_and }} emerge --quiet --sync \
-              {{ shell_and }} emerge --quiet --ask n '=dev-lang/python-2*' gentoolkit \
-              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apk', 'false') }} \
-              {{ shell_and }} apk add --quiet --update-cache python3 \
-              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apk', 'false') }} \
-              {{ shell_and }} apk add --quiet --update-cache python \
-              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ ( remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' pkg', 'false') }} \
-              {{ shell_and }} pkg install -y python27 \
-              {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ (remote_linux_x64_gblic.rc | d(0) == 42) | ternary('true', shell_exit + ' 50') }}{{ shell_newline }}
-          {{ shell_which }} wget \
-          {{ shell_or }} {{ shell_which }} curl \
-          {{ shell_or }} {{ shell_exit }} 51{{ shell_newline }}
-          cd {{ shell_or }} {{ shell_exit }} 52{{ shell_newline }}
-          mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 53{{ shell_newline }}
-          cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 54{{ shell_newline }}
-          {{ shell_which }} wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} \
-                            | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
-          test {{ shell_err_code }} != 0 \
-               {{ shell_and }} rm -f exxo \
-               {{ shell_and }} {{ shell_which }} curl \
-               {{ shell_and }} curl -L --insecure -o - -- {{ exxo_url | quote }} \
-                               | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
-          test -x exxo \
-               {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
-               {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
-               {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-          {{ shell_exit }} 55
-      ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
-
-    - name: Detect installed python again
-      register: detect_installed_python_again
-      vars:
-        raw_script: |-
-          /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
-          python3          {{ shell_exit_if_python_is_valid }}
-          python3.11       {{ shell_exit_if_python_is_valid }}
-          python311        {{ shell_exit_if_python_is_valid }}
-          python3.10       {{ shell_exit_if_python_is_valid }}
-          python310        {{ shell_exit_if_python_is_valid }}
-          python3.9        {{ shell_exit_if_python_is_valid }}
-          python39         {{ shell_exit_if_python_is_valid }}
-          python3.8        {{ shell_exit_if_python_is_valid }}
-          python38         {{ shell_exit_if_python_is_valid }}
-          python3.7        {{ shell_exit_if_python_is_valid }}
-          python37         {{ shell_exit_if_python_is_valid }}
-          python3.6        {{ shell_exit_if_python_is_valid }}
-          python36         {{ shell_exit_if_python_is_valid }}
-          python3.5        {{ shell_exit_if_python_is_valid }}
-          python35         {{ shell_exit_if_python_is_valid }}
-          /usr/bin/python  {{ shell_exit_if_python_is_valid }}
-          python2.7        {{ shell_exit_if_python_is_valid }}
-          python27         {{ shell_exit_if_python_is_valid }}
-          python2          {{ shell_exit_if_python_is_valid }}
-          python2.6        {{ shell_exit_if_python_is_valid }}
-          python26         {{ shell_exit_if_python_is_valid }}
-          pyrun2.7         {{ shell_exit_if_python_is_valid }}
-          pyrun            {{ shell_exit_if_python_is_valid }}
-          pypy             {{ shell_exit_if_python_is_valid }}
-          {{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
-                          {{ shell_exit_if_python_is_valid }}
-          {{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
-                          {{ shell_exit_if_python_is_valid }}
-          echo "Unsupported platforms!"{{ shell_newline }}
-          {{ shell_exit }} 43
-      ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
-      failed_when: detect_installed_python_again.rc | d(500) != 0 or not detect_installed_python_again.stdout_lines | last | d
-      changed_when: False
-
-    - name: Set ansible_python_interpreter after installing
-      ansible.builtin.set_fact:
-        ansible_python_interpreter: "{{ detect_installed_python_again.stdout_lines | last }}"
-      when:
-      - detect_installed_python_again is not skipped
-      - detect_installed_python_again is succeeded
-      - detect_installed_python_again.stdout_lines | last != '/usr/bin/python'
-
-    always:
-    - name: Cleanup downloading files
-      ansible.builtin.raw: rm -rf {{ ('~/.ansible/tmp/exxo' + omit) | quote }}
-      ignore_errors: True
-      changed_when: False
-
-  always:
-  - name: Test ping
-    ping:
-
+- name: Top try-catch block
   vars:
     shell_exec: >-
         {{ ( [ansible_shell_type | d('sh')]
@@ -241,3 +40,202 @@
     exxo_installer_version: "0"
   when:
   - not ansible_python_interpreter | d or detect_installed_python is defined or installing_python is defined
+
+  block:
+
+  - name: Detect installed python
+    register: detect_installed_python
+    vars:
+      raw_script: |-
+        /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
+        python3          {{ shell_exit_if_python_is_valid }}
+        python3.11       {{ shell_exit_if_python_is_valid }}
+        python311        {{ shell_exit_if_python_is_valid }}
+        python3.10       {{ shell_exit_if_python_is_valid }}
+        python310        {{ shell_exit_if_python_is_valid }}
+        python3.9        {{ shell_exit_if_python_is_valid }}
+        python39         {{ shell_exit_if_python_is_valid }}
+        python3.8        {{ shell_exit_if_python_is_valid }}
+        python38         {{ shell_exit_if_python_is_valid }}
+        python3.7        {{ shell_exit_if_python_is_valid }}
+        python37         {{ shell_exit_if_python_is_valid }}
+        python3.6        {{ shell_exit_if_python_is_valid }}
+        python36         {{ shell_exit_if_python_is_valid }}
+        python3.5        {{ shell_exit_if_python_is_valid }}
+        python35         {{ shell_exit_if_python_is_valid }}
+        /usr/bin/python  {{ shell_exit_if_python_is_valid }}
+        python2.7        {{ shell_exit_if_python_is_valid }}
+        python27         {{ shell_exit_if_python_is_valid }}
+        python2          {{ shell_exit_if_python_is_valid }}
+        python2.6        {{ shell_exit_if_python_is_valid }}
+        python26         {{ shell_exit_if_python_is_valid }}
+        pyrun2.7         {{ shell_exit_if_python_is_valid }}
+        pyrun            {{ shell_exit_if_python_is_valid }}
+        pypy             {{ shell_exit_if_python_is_valid }}
+        {{ ('/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version) | quote }}/bin/python \
+                         {{ shell_exit_if_python_is_valid }}
+        {{ ('/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version) | quote }}/bin/python \
+                         {{ shell_exit_if_python_is_valid }}
+        {{ shell_exit }} 41
+    ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
+    failed_when: detect_installed_python.rc | d(500) != 0 or not detect_installed_python.stdout_lines | last | d
+    changed_when: False
+
+  - name: Set ansible_python_interpreter
+    ansible.builtin.set_fact:
+      ansible_python_interpreter: "{{ detect_installed_python.stdout_lines | last }}"
+    when:
+    - detect_installed_python is not skipped
+    - detect_installed_python is succeeded
+    - detect_installed_python.stdout_lines | last != '/usr/bin/python'
+
+  rescue:
+  - name: Remote is root?
+    register: remote_is_root
+    ansible.builtin.raw: id -u
+    ignore_errors: True
+    changed_when: False
+
+  - name: Remote is Linux X64 with gblic
+    register: remote_linux_x64_gblic
+    ansible.builtin.script: "{{ role_path }}/files/detect-linux-x64-gcc"
+    ignore_errors: True
+    failed_when: remote_linux_x64_gblic.rc | d(0) != 42
+    changed_when: False
+
+  # python bootstrap for ansible
+  # reference:
+  #   [0]: https://github.com/dochang/ansible-role-bootstrap/
+  #   [1]: https://github.com/bambocher/ansible-role-bootstrap/
+  # Apt:
+  #   - Install `python-apt` which is required by Ansible `apt` module.
+  # zypper:
+  #   - zypper must be checked before yum since zypper uses yum as backend.
+  #   - Install `python-xml`, because the Ansible module `zypper_repository` depends on it.
+  # yum:
+  #   - Install `yum-utils`.  Ansible `yum` module requires `repoquery`,
+  #     which is provided by `yum-utils`, to use `list` parameter.
+  # dnf:
+  #   - Install `python2-dnf`, which is required by Ansible `dnf` module.
+  # emerge:
+  #   - Install `gentoolkit`, which contains `equery`. `gentoolkit` is also required by Ansible `portage` module.
+  # apk:
+  #   - from alpine 3.5, python 2 is not avaliable, only support install python 3
+  - name: Installing python
+    register: installing_python
+    vars:
+      exxo_deploy_base: "{{ (remote_is_root.stdout_lines | first | d == '0') | ternary('/opt', '/var/tmp') }}"
+      exxo_deploy_dir: "{{ exxo_deploy_base }}/exxo-python-{{ exxo_version }}-{{ exxo_installer_version }}"
+      raw_script: |-
+        {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apt-get', 'false') }} \
+            {{ shell_and }} {{ shell_export }} DEBIAN_FRONTEND{{ shell_export_eq }}noninteractive \
+            {{ shell_and }} apt-get --quiet=2 --option 'Acquire::Languages=none' update \
+            {{ shell_and }} apt-get --quiet=2 --assume-yes install python python-dev python-apt \
+            {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' zypper', 'false') }} \
+            {{ shell_and }} zypper --quiet refresh \
+            {{ shell_and }} zypper --quiet --non-interactive install --auto-agree-with-licenses python python-devel \
+            {{ shell_and }} zypper --quiet --non-interactive install --auto-agree-with-licenses python-xml \
+            {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ shell_which }} zypper{{ shell_newline }}
+        test {{ shell_err_code }} != 0 {{ shell_and }} \
+        {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' yum', 'false') }} \
+            {{ shell_and }} yum --quiet makecache fast \
+            {{ shell_and }} yum --quiet -y install python python-devel yum-utils \
+            {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' pacman', 'false') }} \
+            {{ shell_and }} pacman --sync --quiet --noconfirm --refresh python2 \
+            {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' dnf', 'false') }} \
+            {{ shell_and }} dnf --quiet makecache fast \
+            {{ shell_and }} dnf --quiet --assumeyes install python python-devel python2-dnf \
+            {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' emerge', 'false') }} \
+            {{ shell_and }} emerge --quiet --sync \
+            {{ shell_and }} emerge --quiet --ask n '=dev-lang/python-2*' gentoolkit \
+            {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apk', 'false') }} \
+            {{ shell_and }} apk add --quiet --update-cache python3 \
+            {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' apk', 'false') }} \
+            {{ shell_and }} apk add --quiet --update-cache python \
+            {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' pkg', 'false') }} \
+            {{ shell_and }} pkg install -y python27 \
+            {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ (remote_linux_x64_gblic.rc | d(0) == 42) | ternary('true', shell_exit + ' 50') }}{{ shell_newline }}
+        {{ shell_which }} wget \
+        {{ shell_or }} {{ shell_which }} curl \
+        {{ shell_or }} {{ shell_exit }} 51{{ shell_newline }}
+        cd {{ shell_or }} {{ shell_exit }} 52{{ shell_newline }}
+        mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 53{{ shell_newline }}
+        cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 54{{ shell_newline }}
+        {{ shell_which }} wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} \
+                          | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
+        test {{ shell_err_code }} != 0 \
+             {{ shell_and }} rm -f exxo \
+             {{ shell_and }} {{ shell_which }} curl \
+             {{ shell_and }} curl -L --insecure -o - -- {{ exxo_url | quote }} \
+                             | tar {{ ( 'x' + exxo_untar_flags + 'vf' ) | quote }} -{{ shell_newline }}
+        test -x exxo \
+             {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
+             {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
+             {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
+        {{ shell_exit }} 55
+    ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
+    changed_when: installing_python is succeeded
+
+  - name: Detect installed python again
+    register: detect_installed_python_again
+    vars:
+      raw_script: |-
+        /usr/bin/python3 {{ shell_exit_if_python_is_valid }}
+        python3          {{ shell_exit_if_python_is_valid }}
+        python3.11       {{ shell_exit_if_python_is_valid }}
+        python311        {{ shell_exit_if_python_is_valid }}
+        python3.10       {{ shell_exit_if_python_is_valid }}
+        python310        {{ shell_exit_if_python_is_valid }}
+        python3.9        {{ shell_exit_if_python_is_valid }}
+        python39         {{ shell_exit_if_python_is_valid }}
+        python3.8        {{ shell_exit_if_python_is_valid }}
+        python38         {{ shell_exit_if_python_is_valid }}
+        python3.7        {{ shell_exit_if_python_is_valid }}
+        python37         {{ shell_exit_if_python_is_valid }}
+        python3.6        {{ shell_exit_if_python_is_valid }}
+        python36         {{ shell_exit_if_python_is_valid }}
+        python3.5        {{ shell_exit_if_python_is_valid }}
+        python35         {{ shell_exit_if_python_is_valid }}
+        /usr/bin/python  {{ shell_exit_if_python_is_valid }}
+        python2.7        {{ shell_exit_if_python_is_valid }}
+        python27         {{ shell_exit_if_python_is_valid }}
+        python2          {{ shell_exit_if_python_is_valid }}
+        python2.6        {{ shell_exit_if_python_is_valid }}
+        python26         {{ shell_exit_if_python_is_valid }}
+        pyrun2.7         {{ shell_exit_if_python_is_valid }}
+        pyrun            {{ shell_exit_if_python_is_valid }}
+        pypy             {{ shell_exit_if_python_is_valid }}
+        {{ ( '/opt/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
+                        {{ shell_exit_if_python_is_valid }}
+        {{ ( '/var/tmp/exxo-python-' + exxo_version + '-' + exxo_installer_version ) | quote }}/bin/python \
+                        {{ shell_exit_if_python_is_valid }}
+        echo "Unsupported platforms!"{{ shell_newline }}
+        {{ shell_exit }} 43
+    ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
+    failed_when: detect_installed_python_again.rc | d(500) != 0 or not detect_installed_python_again.stdout_lines | last | d
+    changed_when: False
+
+  - name: Set ansible_python_interpreter after installing
+    ansible.builtin.set_fact:
+      ansible_python_interpreter: "{{ detect_installed_python_again.stdout_lines | last }}"
+    when:
+    - detect_installed_python_again is not skipped
+    - detect_installed_python_again is succeeded
+    - detect_installed_python_again.stdout_lines | last != '/usr/bin/python'
+
+  always:
+  - name: Cleanup downloading files
+    ansible.builtin.raw: rm -rf {{ ('~/.ansible/tmp/exxo' + omit) | quote }}
+    ignore_errors: True
+    changed_when: False
+  - name: Test ping
+    ping:

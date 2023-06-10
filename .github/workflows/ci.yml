@@ -18,14 +18,12 @@ jobs:
         python3 --version
         pip3 --version
         ansible --version
-        ansible-galaxy --version
         docker version
 
     - name: prepare tests
       run: |
         set -x
         pip3 install -r requirements.txt
-        ansible-galaxy install -p tests/roles -r requirements.yml
         docker pull danielguerra/alpine-sshd
         docker pull centos:7
 
