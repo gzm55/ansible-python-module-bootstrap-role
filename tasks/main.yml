@@ -98,9 +98,10 @@
 
   - name: Remote is Linux X64 with gblic
     register: remote_linux_x64_gblic
-    ansible.builtin.script: "{{ role_path }}/files/detect-linux-x64-gcc"
+      #ansible.builtin.script: "{{ role_path }}/files/detect-linux-x64-gcc"
+    ansible.builtin.raw: test -x /lib64/ld-linux-x86-64.so.2
     ignore_errors: True
-    failed_when: remote_linux_x64_gblic.rc | d(0) != 42
+      #failed_when: remote_linux_x64_gblic.rc | d(0) != 42
     changed_when: False
 
   # python bootstrap for ansible

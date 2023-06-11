@@ -16,6 +16,7 @@ jobs:
     - name: print versions
       run: |
         set -x
+        uname -a
         python3 --version
         pip3 --version
         ansible --version
