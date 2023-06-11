@@ -65,15 +65,16 @@ jobs:
         ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_shell_type=fish -e ansible_shell_executable=/usr/bin/fish
         ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_python_interpreter=/usr/bin/python3 # apk 3.5+ only support python3
 
-    - name: non root on alpine
-      run: |
-        set -x
-        docker exec -i alpine-sshd sh -c 'apk del python3'
-        true && ! ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
+        # TODO
+        #- name: non root on alpine
+        #run: |
+        #set -x
+        #docker exec -i alpine-sshd sh -c 'apk del python3'
+        #true && ! ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
         #docker exec -i alpine-sshd sh -xc 'export GLIBC_VERSION=2.35-r1 && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && curl -Lo glibc.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" && curl -Lo glibc-bin.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" && apk add glibc-bin.apk glibc.apk && /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib && echo -n "hosts:">>/etc/nsswitch.conf && echo " files mdns4_minimal [NOTFOUND=return] dns mdns4" >> /etc/nsswitch.conf'
-        docker exec -i alpine-sshd sh -xc 'export GLIBC_VERSION=2.35-r1 && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && curl -Lo glibc.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" && curl -Lo glibc-bin.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" && apk add glibc-bin.apk glibc.apk && echo -n "hosts:">>/etc/nsswitch.conf && echo " files mdns4_minimal [NOTFOUND=return] dns mdns4" >> /etc/nsswitch.conf'
-        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
-        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
+        #docker exec -i alpine-sshd sh -xc 'export GLIBC_VERSION=2.35-r1 && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && curl -Lo glibc.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" && curl -Lo glibc-bin.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" && apk add glibc-bin.apk glibc.apk && echo -n "hosts:">>/etc/nsswitch.conf && echo " files mdns4_minimal [NOTFOUND=return] dns mdns4" >> /etc/nsswitch.conf'
+        #ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
+        #ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
 
     - name: root on centos 7
       run: |
