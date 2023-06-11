@@ -171,6 +171,7 @@
         cd {{ shell_or }} {{ shell_exit }} 52{{ shell_newline }}
         mkdir -p {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 53{{ shell_newline }}
         cd {{ ('.ansible/tmp/exxo' + omit) | quote }} {{ shell_or }} {{ shell_exit }} 54{{ shell_newline }}
+        set -x {{ shell_newline }}
         {{ shell_which }} wget {{ shell_and }} wget -O - -- {{ exxo_url | quote }} \
                           | tar {{ ('x' + exxo_untar_flags + 'vf') | quote }} -{{ shell_newline }}
         test {{ shell_err_code }} != 0 \
@@ -178,6 +179,7 @@
              {{ shell_and }} {{ shell_which }} curl \
              {{ shell_and }} curl -L --insecure -o - -- {{ exxo_url | quote }} \
                              | tar {{ ('x' + exxo_untar_flags + 'vf') | quote }} -{{ shell_newline }}
+        ldd exxo {{ shell_newline }}
         test -x exxo \
              {{ shell_and }} mkdir -p -- {{ exxo_deploy_dir | quote }} \
              {{ shell_and }} ./exxo venv -p 2.7 -- {{ exxo_deploy_dir | quote }} \
