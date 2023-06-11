@@ -164,7 +164,7 @@
         {{ (remote_is_root.stdout_lines | first | d == '0') | ternary(shell_which + ' pkg', 'false') }} \
             {{ shell_and }} pkg install -y python27 \
             {{ shell_and }} {{ shell_exit }} 0{{ shell_newline }}
-        {{ (remote_linux_x64_gblic.rc | d(0) == 42) | ternary('true', shell_exit + ' 50') }}{{ shell_newline }}
+        {{ (remote_linux_x64_gblic.rc | d(0) == 0) | ternary('true', shell_exit + ' 50') }}{{ shell_newline }}
         {{ shell_which }} wget \
         {{ shell_or }} {{ shell_which }} curl \
         {{ shell_or }} {{ shell_exit }} 51{{ shell_newline }}
