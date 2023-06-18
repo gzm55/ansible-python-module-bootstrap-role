@@ -11,6 +11,7 @@ The detecting and bootstraping scripts to be executed by `raw` module are all co
 Requirements
 ------------
 
+- `python_module_bootstrap >= 2.0.0` requires `ansible >= 2.8`
 - `python_module_bootstrap >= 1.0` requires `ansible >= 2.5`
 - `python_module_bootstrap < 1.0` requires `ansible >= 2.0`
 
@@ -18,8 +19,8 @@ Role Variables
 --------------
 
 - `exxo_version`: default is 0.0.7
-- `exxo_url`: default to `https://bintray.com/artifact/download/mbachry/exxo/exxo-<exxo_version>.tar.xz`
-- `exxo_untar_flags`: default to `J`, if the remote system can't decompress xz format, we can recompress as gzip, and update this flag
+- `exxo_url`: default to `https://github.com/gzm55/ansible-python-module-bootstrap-role/releases/download/upload-exxo-bz2/exxo-<exxo_version>.tar.bz2`
+- `exxo_untar_flags`: default to `j`, if the remote system can't decompress xz format, we can recompress as gzip, and update this flag
 
 Dependencies
 ------------
