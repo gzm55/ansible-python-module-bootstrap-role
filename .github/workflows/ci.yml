@@ -51,7 +51,8 @@ jobs:
         # add userA
         docker rm -f centos-sshd || true
         docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos:7 sh -xc 'yum --assumeyes install openssh-server tcsh && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
-        docker logs -f centos-sshd | head -n 1000
+        sleep 30
+        docker logs --since 2m centos-sshd
         docker exec -i centos-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA; su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
         cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys /home/userA/.ssh/authorized_keys'
         ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
