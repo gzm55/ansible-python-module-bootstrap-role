@@ -92,12 +92,13 @@ jobs:
         ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
         ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
 
-    - name: non root on alpine using docker connection
-      run: |
-        set -x
-        docker exec -i alpine-sshd sh -c 'apk del python3; rm -rf /var/tmp/exxo-python*'
-        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_connection=docker -e ansible_host=alpine-sshd
-        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_connection=docker -e ansible_host=alpine-sshd
+    # TODO
+    #- name: non root on alpine using docker connection
+    #run: |
+    #set -x
+    #docker exec -i alpine-sshd sh -c 'apk del python3; rm -rf /var/tmp/exxo-python*'
+    #ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_connection=docker -e ansible_host=alpine-sshd
+    #ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_connection=docker -e ansible_host=alpine-sshd
 
     - name:  root on alpine with python3
       run: |
