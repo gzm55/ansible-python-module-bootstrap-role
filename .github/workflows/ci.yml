@@ -51,8 +51,6 @@ jobs:
         # add userA
         docker rm -f centos-sshd || true
         docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos:7 sh -xc 'yum --assumeyes install openssh-server tcsh && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
-        sleep 30
-        docker logs --since 2m centos-sshd
         docker exec -i centos-sshd sh -c 'echo -e "userA123456\nuserA123456\n" | adduser userA; su -c "cd; umask 077; mkdir -p .ssh; touch .ssh/authorized_keys" userA'
         cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys /home/userA/.ssh/authorized_keys'
         ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
@@ -67,7 +65,7 @@ jobs:
         ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_shell_type=fish -e ansible_shell_executable=/usr/bin/fish
         ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_python_interpreter=/usr/bin/python3 # apk 3.5+ only support python3
 
-        # TODO
+        # TODO exxo now does not work with alpine
         #- name: non root on alpine
         #run: |
         #set -x
@@ -77,20 +75,6 @@ jobs:
         #docker exec -i alpine-sshd sh -xc 'export GLIBC_VERSION=2.35-r1 && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && curl -Lo glibc.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" && curl -Lo glibc-bin.apk "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" && apk add glibc-bin.apk glibc.apk && echo -n "hosts:">>/etc/nsswitch.conf && echo " files mdns4_minimal [NOTFOUND=return] dns mdns4" >> /etc/nsswitch.conf'
         #ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
         #ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA
-
-    - name: root on centos 7
-      run: |
-        set -x
-        docker logs centos-sshd
-        ssh-keyscan -p 5848 localhost >> ~/.ssh/known_hosts
-        ssh -p 5848 root@localhost true
-        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=5848
-
-    - name: non root on centos 7
-      run: |
-        set -x
-        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
-        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
 
     # TODO
     #- name: non root on alpine using docker connection
@@ -106,6 +90,24 @@ jobs:
         docker exec -i alpine-sshd sh -c 'apk del python3; rm -rf /var/tmp/exxo-python*; apk add python3'
         ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root
         ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root
+
+    - name: root on centos 7
+      run: |
+        set -x
+        i=0
+        while (( i < 30 )); do
+          i=$(( i + 1 ))
+          ! ssh-keyscan -p 5848 localhost >> ~/.ssh/known_hosts || break
+        done
+        ssh -p 5848 root@localhost true
+        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=root -e ansible_port=5848
+
+    - name: non root on centos 7
+      run: |
+        set -x
+        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
+        ansible-playbook tests/test.yml -i tests/inventory -e ansible_user=userA -e ansible_port=5848 -e ansible_shell_type=csh -e ansible_shell_executable=/usr/bin/tcsh
+
 
   lint-job:
     name: lint codes
