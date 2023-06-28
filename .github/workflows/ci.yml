@@ -70,6 +70,7 @@ jobs:
         set -x
         docker exec -i alpine-sshd sh -c 'apk del python3; rm -rf /var/tmp/exxo-python*; apk add sudo'
         docker exec -i alpine-sshd sh -c 'addgroup userA wheel'
+        docker exec -i alpine-sshd sh -c 'echo "userA:123456" | chpasswd'
         docker exec -i alpine-sshd sh -c 'echo "%wheel ALL=(ALL) ALL" >/etc/sudoers.d/wheel'
         ansible-playbook -vvvvv tests/test.yml -i tests/inventory -e ansible_user=userA --become -e ansible_become_pass=123456
 
